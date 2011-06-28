@@ -1,0 +1,173 @@
+
+
+<elements>
+
+  <elementDef name="objectCaching_CachedObject">
+    <objectInline>
+      <stringInline value="objectCaching.CachedObject" />
+      <tupleInline>
+        <!-- 0 -->
+        <tupleInline>
+          <!-- 0: timestamp when the object has been created -->
+          <long name="timestamp" />
+          <!-- 1: version of object -->
+          <int name="version" />
+        </tupleInline>
+        <!-- 1 -->
+        <none />
+        <!-- 2: nodeID where the object is kept -->
+        <int name="nodeID" />
+        <!-- 3: true if shared among users, thus
+                worth keeping in cache on proxies -->
+        <int name="shared" />
+        <!-- 4: marshaled content of object -->
+        <buffer name="pickle" />
+        <!-- 5: true if pickle is compressed -->
+        <int name="compressed" />
+        <!-- 6: unique identifier of object -->
+        <raw name="objectID" />
+      </tupleInline>
+    </objectInline>
+  </elementDef>
+
+  <elementDef name="objectCaching_CachedObject_spec">
+    <objectInline>
+      <stringInline value="util.CachedObject" />
+      <tupleInline>
+        <!-- 0 -->
+        <raw name="objectID" />
+        <!-- 1 -->
+        <int name="nodeID" />
+        <!-- 2 -->
+        <tupleInline>
+          <!-- 0 -->
+          <long name="timestamp" />
+          <!-- 1 -->
+          <int name="version" />
+        </tupleInline>
+      </tupleInline>
+    </objectInline>
+  </elementDef>
+
+  <elementDef name="objectCaching_CachedMethodCallResult">
+    <objectInline>
+      <stringInline value="objectCaching.CachedMethodCallResult" />
+	    <tupleInline>
+	      <!-- 0: details -->
+	      <dictInline>
+		      <dictInlineEntry key="sessionInfo">
+            <!-- sessionInfo: if this field is present, then it contains a string which
+                 is the string of a key in the session. The value of that element in the
+                 current session is used as part of the key for the cache item.
+            -->
+		        <string name="sessionInfo" />
+		      </dictInlineEntry>
+		      <dictInlineEntry key="versionCheck">
+            <tupleInline>
+              <!-- these fields are one of:
+                   (always, never, (set of times))
+              -->
+              <!-- 0: clientWhen: expiry in the client -->
+		          <string name="clientWhen" />
+		          <!-- 1: proxyWhen: expiry on the proxy, may be None -->
+		          <string name="proxyWhen" />
+		          <!-- 2: serverWhen: expiry on the server, may be None -->
+		          <string name="serverWhen" />
+	          </tupleInline>
+		      </dictInlineEntry>
+	      </dictInline>
+	      <!-- 1: result -->
+        <raw name="call_return" />
+	      <!-- 2: version -->
+	      <listInline>
+		      <!-- 0 -->
+		      <long name="timeStamp" />
+		      <!-- 1: binascii.crc_hqx(call_return, (macho.version + 170472)) -->
+		      <int name="version" />
+	      </listInline>
+	    </tupleInline>
+    </objectInline>
+  </elementDef>
+
+  <elementDef name="objectCaching_CachedMethodCallResult_object">
+    <objectInline>
+      <stringInline value="objectCaching.CachedMethodCallResult" />
+	    <tupleInline>
+	      <!-- 0: details -->
+	      <dictInline>
+		      <dictInlineEntry key="versionCheck">
+            <!-- almost all simple objects on live use never...
+                a few use run, we default to run to be more flexible. -->
+            <string name="versionCheck" default="run" />
+		      </dictInlineEntry>
+	      </dictInline>
+	      <!-- 1: result, in this case it is always a util.CachedObject hint -->
+        <!-- <element type="objectCaching_CachedObject_spec" name="object" /> -->
+        <raw name="object" />
+	      <!-- 2: version, never present on a cached object cached method -->
+        <none />
+	    </tupleInline>
+    </objectInline>
+  </elementDef>
+
+  <!-- A representation of a simple cached method call objectID, with no arguments -->
+  <elementDef name="SimpleMethodCallID">
+    <tupleInline>
+      <!-- 0 -->
+      <stringInline value="Method Call" />
+      <!-- 1 -->
+      <string name="origin" default="server" />
+      <!-- 2 -->
+      <tupleInline>
+        <!-- 0 -->
+        <string name="service" />
+        <!-- 1 -->
+        <string name="method" />
+      </tupleInline>
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="CallGetCachableObject">
+    <tupleInline>
+      <!-- 0 -->
+      <int name="shared" />
+      <!-- 1 -->
+	    <!-- either a string or a tuple -->
+      <raw name="objectID" />
+      <!-- 2 -->
+      <tupleInline>
+        <!-- 0 -->
+        <long name="timestamp" />
+        <!-- 1 -->
+        <int name="version" />
+      </tupleInline>
+      <!-- 3 -->
+      <int name="nodeID" />
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="RspGetCachableObject">
+    <tupleInline>
+      <!-- 0 -->
+      <substreamInline>
+	      <element type="objectCaching_CachedObject_spec" name="object" />
+      </substreamInline>
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="objectCaching_CacheOK">
+    <objectInline>
+      <stringInline value="objectCaching.CacheOK" />
+      <dictInline>
+        <dictInlineEntry key="args">
+          <tupleInline>
+            <stringInline value="CacheOK" />
+          </tupleInline>
+        </dictInlineEntry>
+      </dictInline>
+    </objectInline>
+  </elementDef>
+
+</elements>
+
+

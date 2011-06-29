@@ -25,19 +25,6 @@
 
 #include "EVEServerPCH.h"
 
-PyRep* CertificateMgrDB::GetMyCertificates( uint32 characterID )
-{
-    sLog.Debug( "CertificateMgrDB", "Called GetMyCertificates stub." );
-
-	util_Rowset rs;
-
-	rs.header.push_back( "certificateID" );
-	rs.header.push_back( "grantDate" );
-	rs.header.push_back( "visiblityFlags" );
-
-	return rs.Encode();
-}
-
 PyRep *CertificateMgrDB::GetCertificateCategories() {
 	DBQueryResult res;
 

@@ -352,6 +352,8 @@ class Character
 public:
 	typedef InventoryDB::QueuedSkill QueuedSkill;
 	typedef InventoryDB::SkillQueue SkillQueue;
+	typedef InventoryDB::currentCertificates cCertificates;
+	typedef InventoryDB::Certificates Certificates;
 
 	/**
 	 * Loads character.
@@ -398,6 +400,7 @@ public:
 	 * @return Pointer to Skill object; NULL if skill was not found.
 	 */
 	SkillRef GetSkill(uint32 skillTypeID) const;
+
 	/**
 	 * Returns skill currently in training.
 	 *
@@ -437,10 +440,42 @@ public:
 	 * @param InventoryItem
 	 */
 	bool InjectSkillIntoBrain(SkillRef skill);
+
 	/*
 	 * GM Version, allows level set
 	 */
 	bool InjectSkillIntoBrain(SkillRef skill, uint8 level);
+
+	/* GrantCertificate( uint32 certificateID )
+	 * 
+	 * This will add a certificate into the character
+	 * @author almamu
+	 */
+	void GrantCertificate( uint32 certificateID );
+
+	/* UpdateCertificate( uint32 certificateID, bool pub )
+	 * 
+	 * This will change the public status of the certificate
+	 * @author almamu
+	 */
+	void UpdateCertificate( uint32 certificateID, bool pub );
+
+	/* HasCertificate( uint32 certificateID )
+	 * 
+	 * This will check if the player has a certificate
+	 * @author almamu
+	 */
+	bool HasCertificate( uint32 certificateID ) const;
+
+	/* GetCertificates( )
+	 * 
+	 * This will check if the player has a certificate
+	 * @author almamu
+	 */
+	void GetCertificates( Certificates &crt );
+
+	/**
+
 	/* AddSkillToSkillQueue()
 	 * 
 	 * This will add a skill into the skill queue.
@@ -528,6 +563,7 @@ public:
 
 	void SaveCharacter();
 	void SaveSkillQueue() const;
+	void SaveCertificates() const;
 
 protected:
 	Character(
@@ -638,6 +674,7 @@ protected:
 
 	// Skill queue:
 	SkillQueue m_skillQueue;
+	Certificates m_certificates;
     EvilNumber m_totalSPtrained;
 };
 

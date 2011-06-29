@@ -204,6 +204,12 @@
     </tupleInline>
   </elementDef>
 
+  <elementDef name="NotifyOnCloneInstallation">
+    <tupleInline>
+      <stringInline value="OnShipJumpCloneInstallationDone" />
+    </tupleInline>
+  </elementDef>
+  
 </elements>
 
 

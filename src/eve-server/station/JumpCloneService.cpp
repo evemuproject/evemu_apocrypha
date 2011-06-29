@@ -44,6 +44,10 @@ public:
 		
 		PyCallable_REG_CALL(JumpCloneBound, GetCloneState)
 		PyCallable_REG_CALL(JumpCloneBound, InstallCloneInStation)
+		PyCallable_REG_CALL(JumpCloneBound, GetPriceForClone)
+		PyCallable_REG_CALL(JumpCloneBound, CloneJump)
+		PyCallable_REG_CALL(JumpCloneBound, DestroyInstalledClone)
+		PyCallable_REG_CALL(JumpCloneBound, GetShipCloneState)
 	}
 	virtual ~JumpCloneBound() { delete m_dispatch; }
 	virtual void Release() {
@@ -53,6 +57,10 @@ public:
 	
 	PyCallable_DECL_CALL(GetCloneState)
 	PyCallable_DECL_CALL(InstallCloneInStation)
+	PyCallable_DECL_CALL(GetPriceForClone)
+	PyCallable_DECL_CALL(CloneJump)
+	PyCallable_DECL_CALL(DestroyInstalledClone)
+	PyCallable_DECL_CALL(GetShipCloneState)
 
 protected:
 	StationDB *const m_db;		//we do not own this
@@ -87,8 +95,8 @@ PyResult JumpCloneBound::Handle_InstallCloneInStation( PyCallArgs& call )
 	//takes no arguments, returns no arguments
 
     sLog.Debug( "JumpCloneBound", "Called InstallCloneInStation stub." );
-
-    return new PyNone;
+	
+    return m_db->InstallClone( call.client->GetCharacterID(), call.client->GetStationID(), call.client );
 }
 
 PyResult JumpCloneBound::Handle_GetCloneState(PyCallArgs &call) {
@@ -99,13 +107,46 @@ PyResult JumpCloneBound::Handle_GetCloneState(PyCallArgs &call) {
     sLog.Debug( "JumpCloneBound", "Called GetCloneState stub." );
 
 	PyDict* d = new PyDict;
-	d->SetItemString( "clones", new PyNone );
+	d->SetItemString( "clones", m_db->GetCharacterClones( call.client->GetCharacterID() ) );
 	d->SetItemString( "implants", new PyNone );
-	d->SetItemString( "timeLastJump", new PyNone );
+	d->SetItemString( "timeLastJump", new PyNone ); // Free clone jumping!!!
 
 	return new PyObject(
         new PyString( "util.KeyVal" ), d
     );
+}
+
+
+PyResult JumpCloneBound::Handle_GetPriceForClone(PyCallArgs &call) {
+	return new PyFloat( 1125000 ); // Harcoded
+}
+
+PyResult JumpCloneBound::Handle_CloneJump( PyCallArgs &call )
+{
+	// What should we do here ?
+	sLog.Debug( "JumpCloneBound", "Called CloneJump stub" );
+	return new PyBool( true ); // Lets try this
+}
+
+PyResult JumpCloneBound::Handle_DestroyInstalledClone( PyCallArgs &call )
+{
+	Call_SingleIntegerArg arg;
+	sLog.Debug( "JumpCloneBound", "Called DestroyInstalledClone stub" );
+	
+	if( !arg.Decode( &call.tuple ) )
+	{
+		sLog.Error( "JumpCloneBound" ,"Wrong parameters to DestroyInstalledClone");
+		return NULL;
+	}
+
+	return m_db->DestroyClone( call.client->GetCharacterID(), arg.arg, call.client->GetStationID(), call.client );
+}
+
+PyResult JumpCloneBound::Handle_GetShipCloneState( PyCallArgs &call )
+{
+	sLog.Debug( "JumpCloneBound", "Called GetShipCloneState stub" );
+	
+	return NULL; // Harcoded, what should we do here?
 }
 
 /*

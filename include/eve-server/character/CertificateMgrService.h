@@ -50,8 +50,6 @@ protected:
 	PyCallable_DECL_CALL(BatchCertificateGrant)
 	PyCallable_DECL_CALL(BatchCertificateUpdate)
 
-	bool _GrantCertificate(uint32 characterID, uint32 certificateID);
-	bool _UpdateCertificate(uint32 characterID, uint32 certificateID, bool pub);
 };
 
 #endif /* __CERTIFICATE_MGR_SERVICE__H__INCL__ */

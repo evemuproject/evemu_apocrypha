@@ -20,7 +20,7 @@
 	Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 	http://www.gnu.org/copyleft/lesser.txt.
 	------------------------------------------------------------------------------------
-	Author:		Aknor Jaden, adapted from /eve-server/src/character/Character.cpp authored by Zhur, Bloody.Rabbit
+	Author:		Almamu, Aknor Jaden, adapted from /eve-server/src/character/Character.cpp authored by Zhur, Bloody.Rabbit
 */
 
 #ifndef __CONTRACT__H__INCL__
@@ -35,29 +35,187 @@
 /**
  * Class representing contract.
  */
-class Contract
-: public Inventory
+class Skill;
+class ContractDB;
+
+class ContractRequestItem
 {
-	friend class InventoryItem;	// to let it construct us
+public:
+	ContractRequestItem(
+		uint32 _typeID,
+		uint32 _quantity);
+
+	uint32 m_typeID;
+	uint32 m_quantity;
+};
+
+// Main class for contract items
+class ContractItem
+	: public InventoryItem
+{
+	friend class InventoryItem;
+public:
+	/**
+	 * Loads contract items
+	 *
+	 * @param[in] factory
+	 * @param[in] contractID ID of contract item to load.
+	 * @return Pointer to new ContractItem object; NULL if fails.
+	 */
+	static ContractItemRef Load(ItemFactory &factory, uint32 itemID);
+	/**
+	 * Spawns new contract item
+	 *
+	 * @param[in] factory
+	 * @param[in] data Item data of new contract item
+	 * @return Pointer to new ContractItem object; NULL if fails.
+	 */
+	static ContractItemRef Spawn(ItemFactory &factory, ItemData &data);
+protected:
+	ContractItem(
+		ItemFactory &_factory,
+		uint32 _itemID,
+		const ItemType &_type,
+		const ItemData &_data);
+
+	/*
+	 * Member functions
+	 */
+	using InventoryItem::_Load;
+
+	// Template loader:
+	template<class _Ty>
+	static RefPtr<_Ty> _LoadItem(ItemFactory &factory, uint32 itemID,
+		// InventoryItem stuff:
+		const ItemType &type, const ItemData &data)
+	{
+		// check it's a contract item
+		if( data.flag != 6 )
+		{
+			sLog.Error("ContractItem", "Trying to load %d as ContractItem.", data.flag );
+			return RefPtr<_Ty>();
+		}
+
+		// no additional stuff
+
+		return _Ty::template _LoadContractItem<_Ty>( factory, itemID, type, data );
+	}
+
+	// Actual loading stuff:
+	template<class _Ty>
+	static RefPtr<_Ty> _LoadContractItem(ItemFactory &factory, uint32 itemID,
+		// InventoryItem stuff:
+		const ItemType &type, const ItemData &data
+	);
+
+	static uint32 _Spawn(ItemFactory &factory,
+		// InventoryItem stuff:
+		ItemData &data
+	);
+};
+
+// Contracts are NOT items
+class ContractData
+{
+public:
+	ContractData(
+		uint32 _contractID,
+		uint32 _issuerID,
+		uint32 _issuerCorpID, 
+		uint32 _type,
+		uint32 _avail, 
+		uint32 _assigneeID,
+		uint32 _expiretime, 
+		uint32 _duration,
+		uint32 _startStationID,
+		uint32 _endStationID,
+		uint32 _startSolarSystemID,
+		uint32 _endSolarSystemID,
+		uint32 _startRegionID,
+		uint32 _endRegionID,
+		double _price,
+		double _reward,
+		double _collateral,
+		std::string _title,
+		std::string _description,
+		bool _forCorp,
+		uint32 _status, 
+		bool _isAccepted, 
+		uint32 _acceptorID, 
+		uint64 _dateIssued, 
+		uint64 _dateExpired, 
+		uint64 _dateAccepted, 
+		uint64 _dateCompleted, 
+		double _volume,
+		bool _requiresAttention,
+		uint32 _allianceID,
+		uint32 _issuerWalletKey,
+		uint32 _crateID
+	);
+
+	uint32 m_contractID;
+	uint32 m_issuerID;
+	uint32 m_issuerCorpID; 
+	uint32 m_type; 
+	uint32 m_avail; 
+	uint32 m_assigneeID; 
+	uint32 m_expiretime; 
+	uint32 m_duration; 
+	uint32 m_startStationID; 
+	uint32 m_endStationID; 
+	uint32 m_startSolarSystemID; 
+	uint32 m_endSolarSystemID; 
+	uint32 m_startRegionID; 
+	uint32 m_endRegionID; 
+	double m_price; 
+	double m_reward; 
+	double m_collateral; 
+	std::string m_title; 
+	std::string m_description; 
+	bool m_forCorp; 
+	uint32 m_status; 
+	bool m_isAccepted; 
+	uint32 m_acceptorID; 
+	uint64 m_dateIssued; 
+	uint64 m_dateExpired; 
+	uint64 m_dateAccepted; 
+	uint64 m_dateCompleted; 
+	double m_volume; 
+	bool m_requiresAttention;
+	uint32 m_allianceID;
+	uint32 m_issuerWalletKey;
+	uint32 m_crateID;
+};
+
+class Contract
+{
+	// friend class InventoryItem;	// to let it construct us
 public:
 	typedef InventoryDB::QueuedSkill QueuedSkill;
 	typedef InventoryDB::SkillQueue SkillQueue;
 
+	/*
+	 * Loads a contract
+	 *
+	 * @param[in] contractID
+	 * @return Pointer to new Contract object, NULL if failed
+	 *
+	static ContractRef Load( uint32 contractID );
 	/**
 	 * Loads contract.
 	 *
 	 * @param[in] factory
 	 * @param[in] contractD ID of contract to load.
 	 * @return Pointer to new Contract object; NULL if failed.
-	 */
-	static ContractRef Load(ItemFactory &factory, uint32 contractID);
+	 *
+	static ContractRef Load( uint32 contractID );
 	/**
 	 * Spawns new contract.
 	 *
 	 * @param[in] factory
 	 * @return Pointer to new Contract object; NULL if failed.
-	 */
-	static ContractRef Spawn(ItemFactory &factory);
+	 *
+	static ContractRef Spawn( );
 
 	/*
 	 * Primary public interface:
@@ -66,65 +224,53 @@ public:
 	// AcceptContract();
 	// RevokeContract();
 
-	void Delete();
+	//void Delete();
 
 
 	/*
 	 * Public fields:
 	 */
     // General information:
-    const uint32            contractID() const { return inventoryID(); }
-	const std::string &     title() const { return m_title; }
-	const std::string &     description() const { return m_description; }
+    const uint32            contractID() const { return m_contract.m_contractID; }
+	const std::string &     title() const { return m_contract.m_title; }
+	const std::string &     description() const { return m_contract.m_description; }
 
     // Contract Owner information:
-	uint32                  ownerCharacterID() const { return m_ownerCharacterID; }
-	uint32                  ownerCorporationID() const { return m_ownerCorporationID; }
+	uint32                  issuerID() const { return m_contract.m_issuerID; }
+	uint32                  issuerCorpID() const { return m_contract.m_issuerCorpID; }
 
 	// Some importand dates:
-	uint64                  createDateTime() const { return m_createDateTime; }
+	uint64                  dateIssued() const { return m_contract.m_dateIssued; }
+
+	Contract(
+		ContractData &_contract,
+		std::map<uint32, ContractRequestItem> _requestItemTypeList,
+		std::map<uint32, ContractItem> _itemList
+		);
+
+	ContractData &m_contract;
+	std::map<uint32, ContractRequestItem> m_requestItemTypeList;
+	std::map<uint32, ContractItem> m_itemList;
 
 protected:
-	Contract(
-        ItemFactory &_factory,
-        uint32 _contractID,
-        std::string _title,
-        std::string _description,
-        uint32 _ownerCharacterID,
-        uint32 _ownerCorporationID,
-        uint64 _createDateTime)
-	);
-
 	/*
 	 * Member functions:
 	 */
 
 	// Actual loading stuff:
-	template<class _Ty>
-	static RefPtr<_Ty> _LoadContract(ItemFactory &factory, uint32 characterID);
+	/*template<class _Ty>
+	static RefPtr<_Ty> _LoadContract( uint32 characterID );
 
 	bool _Load();
 
-	static uint32 _Spawn(ItemFactory &factory);
+	static uint32 _Spawn( );
 
-	uint32 inventoryID() const { return m_contractID; }
+	uint32 inventoryID() const { return m_contract.m_contractID; }
 	PyRep *GetItem() const { return new PyNone(); }
 
-	void AddItem(InventoryItemRef item);
+	void AddItem(InventoryItemRef item);*/
 
-	/*
-	 * Data members
-	 */
-    uint32 m_contractID;
-
-	std::string m_title;
-	std::string m_description;
-
-    uint32 m_ownerCharacterID;
-	uint32 m_ownerCorporationID;
-
-	uint64 m_createDateTime;
 };
 
-#endif /* !__CHARACTER__H__INCL__ */
+#endif /* !__CONTRACT__H__INCL__ */
 

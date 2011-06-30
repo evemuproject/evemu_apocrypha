@@ -146,7 +146,93 @@ PyRep *StationDB::GetStationItemBits(uint32 sid) {
 	return result;
 }
 
+PyRep *StationDB::InstallClone( uint32 characterID, uint32 stationID, Client* who )
+{
+	// First fetch the clone type
+	DBQueryResult res;
+	DBerror err;
+	uint32 itemID = 0;
 
+	if( !sDatabase.RunQuery( res,
+		"SELECT itemID"
+		" FROM entity"
+		" WHERE flag=400"
+		" AND custominfo='active'"
+		" AND ownerID=%u", characterID ))
+	{
+		_log(SERVICE__ERROR, "Error in InstallCloneInStation: %s", res.error.c_str() );
+		return new PyBool( false );
+	}
+
+	DBResultRow row;
+	if( !res.GetRow( row ) )
+	{
+		_log(SERVICE__ERROR, "Error in InstallCloneInStation query: no clone for character %u", characterID );
+		return new PyBool( false );
+	}
+
+	itemID = row.GetInt( 0 );
+
+	if( !sDatabase.RunQuery( err,
+		"INSERT INTO chrclones("
+		"id,"
+		" characterID,"
+		" stationID,"
+		" itemID"
+		")VALUES("
+		"NULL,"
+		" %u,"
+		" %u,"
+		" %u)", characterID, stationID, itemID ))
+	{
+		_log(SERVICE__ERROR, "Error in InstallCloneInStation when adding info: %s", res.error.c_str() );
+		return new PyBool( true );
+	}
+
+	/*NotifyOnCloneInstallation n;
+	 n.cloneTypeID = itemID;
+
+	PyTuple* t = n.Encode();
+	who->SendNotification( "OnShipJumpCloneInstallationDone", "cloneTypeID", &t);*/
+
+	return new PyBool( true );
+}
+
+
+PyRep *StationDB::GetCharacterClones( uint32 characterID )
+{
+	DBQueryResult res;
+
+	if( !sDatabase.RunQuery( res, 
+		"SELECT stationID AS locationID,"
+		" itemID AS jumpCloneID"
+		" FROM chrclones"
+		" WHERE characterID=%u", characterID ))
+	{
+		_log(SERVICE__ERROR, "Can't get the clones for character %u. Error: %s", characterID, res.error.c_str() );
+		return new PyNone;
+	}
+
+	return DBResultToRowset( res );
+}
+
+
+PyRep *StationDB::DestroyClone( uint32 characterID, uint32 cloneID, uint32 locationID, Client* who )
+{
+	DBerror err;
+
+	if( !sDatabase.RunQuery( err,
+		"DELETE FROM chrclones"
+		" WHERE stationID=%u"
+		" AND itemID=%u"
+		" AND characterID=%u", locationID, cloneID, characterID ))
+	{
+		_log(SERVICE__ERROR, "Can't delete clone %u for character %u. Error: %s", cloneID, characterID, err.c_str() );
+		return NULL;
+	}
+
+	return new PyBool( true );
+}
 
 
 

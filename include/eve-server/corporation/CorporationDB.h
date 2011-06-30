@@ -89,7 +89,7 @@ public:
     bool UpdateLogo(uint32 corpID, const Call_UpdateLogo & upd, PyDict * notif);
 	
 	bool ChangeCloneType(uint32 characterID, uint32 typeID);
-
+	PyRep *GetPotentialHomeStations( uint32 constellationID );
 protected:
 };
 

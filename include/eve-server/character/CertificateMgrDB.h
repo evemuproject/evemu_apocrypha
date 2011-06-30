@@ -34,7 +34,6 @@ class CertificateMgrDB
 : public ServiceDB
 {
 public:
-	PyRep *GetMyCertificates(uint32 characterID);
 	PyRep *GetCertificateCategories();
 	PyRep *GetAllShipCertificateRecommendations();
 	PyRep *GetCertificateClasses();

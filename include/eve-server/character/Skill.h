@@ -40,6 +40,16 @@ class Character;
  * @author Bloody.Rabbit
  * @date June 2009
  */
+
+class Certificate
+: public InventoryItem
+{
+	friend class InventoryItem;
+public:
+protected:
+private:
+};
+
 class Skill
 : public InventoryItem
 {

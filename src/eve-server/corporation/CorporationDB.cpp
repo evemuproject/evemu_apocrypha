@@ -304,6 +304,7 @@ PyObject* CorporationDB::GetMedalsReceived( uint32 charID )
     sLog.Debug( "CorporationDB", "Called GetMedalsReceived stub." );
 
     util_Rowset rs;
+	rs.lines = new PyList;
 
     rs.header.push_back( "medalID" );
     rs.header.push_back( "title" );
@@ -1276,8 +1277,9 @@ bool CorporationDB::UpdateLogo(uint32 corpID, const Call_UpdateLogo & upd, PyDic
 //replace all the typeID of the character's clones
 bool CorporationDB::ChangeCloneType(uint32 characterID, uint32 typeID) {
     DBQueryResult res;
+	DBerror err;
 
-    if(sDatabase.RunQuery(res,
+    if(!sDatabase.RunQuery(res,
         "SELECT "
         " typeID, typeName "
         "FROM "
@@ -1297,7 +1299,7 @@ bool CorporationDB::ChangeCloneType(uint32 characterID, uint32 typeID) {
     }
     std::string typeNameString = row.GetText(1);
 
-	if(sDatabase.RunQuery(res,
+	if(!sDatabase.RunQuery(err,
 		"UPDATE "
 		"entity "
 		"SET typeID=%u, itemName='%s' "
@@ -1307,12 +1309,35 @@ bool CorporationDB::ChangeCloneType(uint32 characterID, uint32 typeID) {
         typeNameString.c_str(),
 		characterID))
 	{
-		_log(DATABASE__ERROR, "Failed to change clone type of char %u: %s.", characterID, res.error.c_str());
+		_log(DATABASE__ERROR, "Failed to change clone type of char %u: %s.", characterID, err.c_str());
 		return false;
 	}
     sLog.Debug( "CorporationDB", "Clone upgrade successful" );
 	return true;
 }
+
+PyRep *CorporationDB::GetPotentialHomeStations( uint32 constellationID )
+{
+	DBQueryResult res;
+
+	if( !sDatabase.RunQuery( res,
+		"SELECT staStations.stationID,"
+		" staStations.stationTypeID as typeID,"
+		" CAST(SUM(staOperationServices.serviceID) as UNSIGNED INTEGER) AS serviceMask"
+		" FROM staStations"
+		" LEFT JOIN staOperations ON staStations.operationID = staOperations.operationID "
+		" LEFT JOIN staOperationServices ON staStations.operationID = staOperationServices.operationID "
+		" WHERE staStations.constellationID=%u"
+		" GROUP BY staStations.stationID", constellationID ))
+	{
+		_log(DATABASE__ERROR, "Failed to get Potential Home Stations for constellationID %u. Error: %s", constellationID, res.error.c_str() );
+		return NULL;
+	}
+
+	return DBResultToRowset( res );
+}
+
+
 
 
 

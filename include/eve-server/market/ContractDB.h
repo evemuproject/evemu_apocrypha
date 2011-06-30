@@ -20,40 +20,41 @@
 	Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 	http://www.gnu.org/copyleft/lesser.txt.
 	------------------------------------------------------------------------------------
-	Author:		Zhur
+	Author:		Almamu
 */
 
-#ifndef __CERTIFICATE_MGR_SERVICE__H__INCL__
-#define __CERTIFICATE_MGR_SERVICE__H__INCL__
+#ifndef __CONTRACTDB_H_INCL__
+#define __CONTRACTDB_H_INCL__
 
-#include "character/CertificateMgrDB.h"
-#include "PyService.h"
+#include "ServiceDB.h"
 
-class CertificateMgrService
-: public PyService
+class PyRep;
+
+typedef enum{
+	conStatusExpired = 8,
+	conStatusFailed = 7,
+	conStatusRejected = 6,
+	conStatusCancelled = 5,
+	conStatusFinished = 4,
+	conStatusFinishedContractor = 3,
+	conStatusFinishedIssuer = 2,
+	conStatusInProgress = 1,
+	conStatusOutstanding = 0
+}contractStatus;
+
+class ContractDB
+: public ServiceDB
 {
 public:
-	CertificateMgrService(PyServiceMgr *mgr);
-	~CertificateMgrService();
-
+	std::map<uint32, Contract> LoadContracts();
 protected:
-	class Dispatcher;
-	Dispatcher *const m_dispatch;
-
-	CertificateMgrDB m_db;
-
-	PyCallable_DECL_CALL(GetMyCertificates)
-	PyCallable_DECL_CALL(GetCertificateCategories)
-	PyCallable_DECL_CALL(GetAllShipCertificateRecommendations)
-	PyCallable_DECL_CALL(GetCertificateClasses)
-	PyCallable_DECL_CALL(GrantCertificate)
-	PyCallable_DECL_CALL(BatchCertificateGrant)
-	PyCallable_DECL_CALL(BatchCertificateUpdate)
-
+	
 };
 
-#endif /* __CERTIFICATE_MGR_SERVICE__H__INCL__ */
 
 
+
+
+#endif
 
 

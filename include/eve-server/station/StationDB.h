@@ -124,6 +124,9 @@ public:
 	PyRep *GetSolarSystem(uint32 ssid);
 	PyRep *DoGetStation(uint32 ssid);
 	PyRep *GetStationItemBits(uint32 sid);
+	PyRep *InstallClone( uint32 characterID, uint32 stationID, Client* who );
+	PyRep *DestroyClone( uint32 characterID, uint32 cloneID, uint32 locationID, Client* who );
+	PyRep *GetCharacterClones( uint32 characterID );
 
 protected:
 	static storage thingy;

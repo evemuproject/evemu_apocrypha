@@ -233,8 +233,9 @@
 #include "map/MapService.h"
 
 #include "market/BillMgrService.h"
-//#include "market/Contract.h"
-//#include "market/ContractManager.h"
+#include "market/Contract.h"
+#include "market/ContractDB.h"
+#include "market/ContractManager.h"
 #include "market/ContractMgrService.h"
 #include "market/MarketDB.h"
 #include "market/MarketProxyService.h"

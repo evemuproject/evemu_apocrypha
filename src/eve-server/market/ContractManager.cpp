@@ -20,7 +20,7 @@
 	Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 	http://www.gnu.org/copyleft/lesser.txt.
 	------------------------------------------------------------------------------------
-	Author:		Aknor Jaden, adapted from /src/eve-server/system/BubbleManager.cpp authored by Zhur
+	Author:		Almamu, Aknor Jaden, adapted from /src/eve-server/system/BubbleManager.cpp authored by Zhur
 */
 
 #include "EVEServerPCH.h"
@@ -28,21 +28,26 @@
 
 ContractManager::ContractManager()
 {
+	// ContractManager creation
+	m_contracts = m_db.LoadContracts();
 }
 
 ContractManager::~ContractManager()
 {
+	// ContractManager destructor
+	sLog.Debug( "ContractManager", "Destroying contract manager..." );
 	clear();
+	sLog.Debug( "ContractManager", "Contract manager destroyed" );
 }
 
 void ContractManager::clear()
 {
-	std::map<uint32, ContractRef>::const_iterator cur, end;
+	std::map<uint32, Contract>::const_iterator cur, end;
 	cur = m_contracts.begin();
 	end = m_contracts.end();
 	for(; cur != end; cur++)
     {
-		delete *cur;
+		delete &cur;
 	}
 	m_contracts.clear();
 }
@@ -55,14 +60,13 @@ void ContractManager::AddContract()
 {
 }
 
-ContractRef ContractManager::GetContract(uint32 contractID)
+/*Contract ContractManager::GetContract(uint32 contractID)
 {
-}
+}*/
 
 void ContractManager::RemoveContract()
 {
 }
 
-void ContractManager::clear()
-{
-}
+
+

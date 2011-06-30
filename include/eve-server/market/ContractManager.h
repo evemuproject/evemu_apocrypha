@@ -39,14 +39,15 @@ public:
 	//
 	void AddContract();
     //
-    ContractRef GetContract(uint32 contractID);
+    // ContractRef GetContract(uint32 contractID);
 	//
 	void RemoveContract();
 	void clear();
 
 protected:
+	ContractDB m_db;
 	// container for active contract objects
-	std::map<uint32, ContractRef> m_contracts;	//we own these
+	std::map<uint32, Contract> m_contracts;	//we own these
 };
 
 #endif /* !__CONTRACTMANAGER__H__INCL__ */

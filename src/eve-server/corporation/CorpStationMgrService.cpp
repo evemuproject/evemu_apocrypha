@@ -199,9 +199,10 @@ PyResult CorpStationMgrIMBound::Handle_GetPotentialHomeStations(PyCallArgs &call
 	//returns a rowset: stationID, typeID
 
 	_log(CLIENT__ERROR, "Hacking GetPotentialHomeStations");
-	result = m_db.ListCorpStations(call.client->GetCorporationID());
+	/*result = m_db.ListCorpStations(call.client->GetCorporationID());
 
-	return result;
+	return result;*/
+	return m_db.GetPotentialHomeStations( call.client->GetConstellationID() );
 }
 
 PyResult CorpStationMgrIMBound::Handle_SetHomeStation(PyCallArgs &call) {

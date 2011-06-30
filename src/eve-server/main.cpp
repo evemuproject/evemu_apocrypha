@@ -124,6 +124,9 @@ int main( int argc, char* argv[] )
 	//make the item factory
     ItemFactory item_factory( sEntityList );
 
+	// make the contract manager
+	ContractManager* contractManager = new ContractManager();
+
     //now, the service manager...
     PyServiceMgr services( 888444, sEntityList, item_factory );
 
@@ -237,6 +240,10 @@ int main( int argc, char* argv[] )
         if( MAIN_LOOP_DELAY > etime )
             Sleep( MAIN_LOOP_DELAY - etime );
     }
+
+	sLog.Log("server shutdown", "Deleting contract manager" );
+	// contractManager->~ContractManager(); // Call the 
+	delete contractManager;
 
     sLog.Log("server shutdown", "Main loop stopped" );
 

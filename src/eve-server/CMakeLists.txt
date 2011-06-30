@@ -197,15 +197,17 @@ SET( map_SOURCE
 
 SET( market_INCLUDE
      "${TARGET_INCLUDE_DIR}/market/BillMgrService.h"
-#     "${TARGET_INCLUDE_DIR}/market/Contract.h"
-#     "${TARGET_INCLUDE_DIR}/market/ContractManager.h"
+     "${TARGET_INCLUDE_DIR}/market/Contract.h"
+     "${TARGET_INCLUDE_DIR}/market/ContractDB.h"
+     "${TARGET_INCLUDE_DIR}/market/ContractManager.h"
      "${TARGET_INCLUDE_DIR}/market/ContractMgrService.h"
      "${TARGET_INCLUDE_DIR}/market/MarketDB.h"
      "${TARGET_INCLUDE_DIR}/market/MarketProxyService.h" )
 SET( market_SOURCE
      "${TARGET_SOURCE_DIR}/market/BillMgrService.cpp"
-#     "${TARGET_SOURCE_DIR}/market/Contract.cpp"
-#     "${TARGET_SOURCE_DIR}/market/ContractManager.cpp"
+     "${TARGET_SOURCE_DIR}/market/Contract.cpp"
+     "${TARGET_SOURCE_DIR}/market/ContractDB.cpp"
+     "${TARGET_SOURCE_DIR}/market/ContractManager.cpp"
      "${TARGET_SOURCE_DIR}/market/ContractMgrService.cpp"
      "${TARGET_SOURCE_DIR}/market/MarketDB.cpp"
      "${TARGET_SOURCE_DIR}/market/MarketProxyService.cpp" )

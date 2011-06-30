@@ -40,6 +40,9 @@ class CargoContainer;
 class Character;
 class SolarSystem;
 class Station;
+class Contract;
+class ContractItem;
+class ContractRequestItem;
 
 /*
  * Typedefs for all item classes we have:
@@ -71,8 +74,14 @@ typedef RefPtr<const SolarSystem>        SolarSystemConstRef;
 typedef RefPtr<Station>                  StationRef;
 typedef RefPtr<const Station>            StationConstRef;
 
-//typedef RefPtr<Contract>				 ContractRef;
-//typedef RefPtr<const Contract>		 ContractConstRef;
+typedef RefPtr<Contract>				 ContractRef;
+typedef RefPtr<const Contract>			 ContractConstRef;
+
+typedef RefPtr<ContractItem>			 ContractItemRef;
+typedef RefPtr<const ContractItem>		 ContractItemConstRef;
+
+typedef RefPtr<ContractRequestItem>		 ContractRequestItemRef;
+typedef RefPtr<const ContractRequestItem> ContractRequestItemConstRef;
 
 #endif /* !__ITEM_REF__H__INCL__ */
 

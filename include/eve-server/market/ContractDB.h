@@ -20,53 +20,41 @@
 	Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 	http://www.gnu.org/copyleft/lesser.txt.
 	------------------------------------------------------------------------------------
-	Author:		Almamu, Aknor Jaden, adapted from /src/eve-server/system/BubbleManager.cpp authored by Zhur
+	Author:		Almamu
 */
 
-#include "EVEServerPCH.h"
+#ifndef __CONTRACTDB_H_INCL__
+#define __CONTRACTDB_H_INCL__
 
+#include "ServiceDB.h"
 
-ContractManager::ContractManager()
+class PyRep;
+
+typedef enum{
+	conStatusExpired = 8,
+	conStatusFailed = 7,
+	conStatusRejected = 6,
+	conStatusCancelled = 5,
+	conStatusFinished = 4,
+	conStatusFinishedContractor = 3,
+	conStatusFinishedIssuer = 2,
+	conStatusInProgress = 1,
+	conStatusOutstanding = 0
+}contractStatus;
+
+class ContractDB
+: public ServiceDB
 {
-	// ContractManager creation
-	m_contracts = m_db.LoadContracts();
-}
+public:
+	std::map<uint32, Contract> LoadContracts();
+protected:
+	
+};
 
-ContractManager::~ContractManager()
-{
-	// ContractManager destructor
-	sLog.Debug( "ContractManager", "Destroying contract manager..." );
-	clear();
-	sLog.Debug( "ContractManager", "Contract manager destroyed" );
-}
 
-void ContractManager::clear()
-{
-	std::map<uint32, Contract>::const_iterator cur, end;
-	cur = m_contracts.begin();
-	end = m_contracts.end();
-	for(; cur != end; cur++)
-    {
-		delete &cur;
-	}
-	m_contracts.clear();
-}
 
-void ContractManager::UpdateContract()
-{
-}
 
-void ContractManager::AddContract()
-{
-}
 
-/*Contract ContractManager::GetContract(uint32 contractID)
-{
-}*/
-
-void ContractManager::RemoveContract()
-{
-}
-
+#endif
 
 

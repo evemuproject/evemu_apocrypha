@@ -20,126 +20,161 @@
     Place - Suite 330, Boston, MA 02111-1307, USA, or go to
     http://www.gnu.org/copyleft/lesser.txt.
     ------------------------------------------------------------------------------------
-    Author:     Aknor Jaden, adapted from /eve-server/src/character/Character.cpp authored by Zhur, Bloody.Rabbit
+    Author:     Almamu, Aknor Jaden, adapted from /eve-server/src/character/Character.cpp authored by Zhur, Bloody.Rabbit
 */
 
 #include "EVEServerPCH.h"
 
-
 /*
- * Contract
+ * ContractRequestItem
  */
-Contract::Contract(
-    ItemFactory &_factory,
-    uint32 _contractID,
-    std::string _title,
-    std::string _description,
-    uint32 _ownerCharacterID,
-    uint32 _ownerCorporationID,
-    uint64 _createDateTime)
-: m_contractID(_contractID),
-  m_title(_title),
-  m_description(_description),
-  m_ownerCharacterID(_ownerCharacterID),
-  m_ownerCorporationID(_ownerCorporationID),
-  m_createDateTime(_createDateTime)
+ContractRequestItem::ContractRequestItem(
+	uint32 _typeID,
+	uint32 _quantity
+	)
+	: m_typeID(_typeID),
+	m_quantity(_quantity)
 {
-    // allow contracts to be only singletons
-    assert(singleton() && quantity() == 1);
 }
 
-ContractRef Contract::Load(ItemFactory &factory, uint32 contractID)
+/*
+ * ContractItem
+ */
+ContractItem::ContractItem(
+	ItemFactory &_factory,
+	uint32 _itemID,
+	const ItemType &_type,
+	const ItemData &_data
+	)
+: InventoryItem(_factory, _itemID, _type, _data)
 {
-    return _LoadContract<Contract>( factory, contractID );
+}
+
+ContractItemRef ContractItem::Load(ItemFactory &factory, uint32 itemID)
+{
+	return InventoryItem::Load<ContractItem>( factory, itemID );
 }
 
 template<class _Ty>
-RefPtr<_Ty> Contract::_LoadContract(ItemFactory &factory, uint32 contractID)
+RefPtr<_Ty> ContractItem::_LoadContractItem(ItemFactory &factory, uint32 itemID,
+	// InventoryItem stuff:
+	const ItemType &type, const ItemData &data)
 {
-    // construct the item
-    return ContractRef( new Contract( factory, contractID ) );
+	return ContractItemRef( new ContractItem( factory, itemID, type, data ) );
 }
 
-ContractRef Contract::Spawn(ItemFactory &factory) {
-    uint32 contractID = Contract::_Spawn( factory, data, charData, appData, corpData );
-    if( contractID == 0 )
-        return CharacterRef();
-
-    ContractRef contractRef = Contract::Load( factory, contractID );
-
-    return contractRef;
-}
-
-uint32 Contract::_Spawn(ItemFactory &factory) {
-    // make sure it's a singleton with qty 1
-    if(!data.singleton || data.quantity != 1) {
-        _log(ITEM__ERROR, "Tried to create non-singleton Contract %s.", data.name.c_str());
-        return 0;
-    }
-
-    // first the item
-    uint32 contractID = Owner::_Spawn(factory, data);
-    if(contractID == 0)
-        return 0;
-
-    // then contract
-    if(!factory.db().NewContract(contractID)) {
-        // delete the item
-        factory.db().DeleteItem(contractID);
-
-        return 0;
-    }
-
-    return contractID;
-}
-
-bool Contract::_Load()
+ContractItemRef ContractItem::Spawn(ItemFactory &factory, ItemData &data)
 {
-    if( !LoadContents( m_factory ) )
-        return false;
+	uint32 itemID = _Spawn( factory, data );
+	if( itemID == 0 )
+		return ContractItemRef();
 
-    return true;
+    ContractItemRef contractItemRef = ContractItem::Load( factory, itemID );
+
+    return contractItemRef;
 }
 
-void Contract::Delete() {
-    // delete contents
-    DeleteContents( m_factory );
-
-    // delete Contract record
-    m_factory.db().DeleteContract(itemID());
-}
-
-void Contract::SetDescription(const char *newDescription) {
-    m_description = newDescription;
-
-    SaveContract();
-}
-
-PyObject *Contract::GetDescription() const
+uint32 ContractItem::_Spawn(ItemFactory &factory, ItemData &data)
 {
-    util_Row row;
+	// check it's a contractItem
+	/*const ItemType *type = factory.GetType( data.typeID );
+	if( type == NULL )
+		return 0;*/
 
-    row.header.push_back("description");
+	if( data.flag != 6 )
+	{
+		_log( ITEM__ERROR, "Trying to spawn %d as ContractItem.", data.flag );
+		return 0;
+	}
 
-    row.line = new PyList;
-    row.line->AddItemString( description().c_str() );
-
-    return row.Encode();
+	// spawn item, nothing else
+	return InventoryItem::_Spawn( factory, data );
 }
 
-void Contract::AddItem(InventoryItemRef item)
+/*
+ * ContractData
+ */
+ContractData::ContractData(
+		uint32 _contractID,
+		uint32 _issuerID,
+		uint32 _issuerCorpID, 
+		uint32 _type,
+		uint32 _avail, 
+		uint32 _assigneeID,
+		uint32 _expiretime, 
+		uint32 _duration,
+		uint32 _startStationID,
+		uint32 _endStationID,
+		uint32 _startSolarSystemID,
+		uint32 _endSolarSystemID,
+		uint32 _startRegionID,
+		uint32 _endRegionID,
+		double _price,
+		double _reward,
+		double _collateral,
+		std::string _title,
+		std::string _description,
+		bool _forCorp,
+		uint32 _status, 
+		bool _isAccepted, 
+		uint32 _acceptorID, 
+		uint64 _dateIssued, 
+		uint64 _dateExpired, 
+		uint64 _dateAccepted, 
+		uint64 _dateCompleted, 
+		double _volume,
+		bool _requiresAttention,
+		uint32 _allianceID,
+		uint32 _issuerWalletKey,
+		uint32 _crateID
+	)
+	: m_contractID(_contractID),
+  m_issuerID(_issuerID),
+  m_issuerCorpID(_issuerCorpID),
+  m_type(_type),
+  m_avail(_avail),
+  m_assigneeID(_assigneeID),
+  m_expiretime(_expiretime),
+  m_duration(_duration),
+  m_startStationID(_startStationID),
+  m_endStationID(_endStationID),
+  m_startSolarSystemID(_startSolarSystemID),
+  m_endSolarSystemID(_endSolarSystemID),
+  m_startRegionID(_startRegionID),
+  m_endRegionID(_endRegionID),
+  m_price(_price),
+  m_reward(_reward),
+  m_collateral(_collateral),
+  m_title(_title),
+  m_description(_description),
+  m_forCorp(_forCorp),
+  m_status(_status),
+  m_isAccepted(_isAccepted),
+  m_acceptorID(_acceptorID),
+  m_dateIssued(_dateIssued),
+  m_dateExpired(_dateExpired),
+  m_dateAccepted(_dateAccepted),
+  m_dateCompleted(_dateCompleted),
+  m_volume(_volume),
+  m_requiresAttention(_requiresAttention),
+  m_allianceID(_allianceID),
+  m_issuerWalletKey(_issuerWalletKey),
+  m_crateID(_crateID)
 {
-    Inventory::AddItem( item );
+
 }
 
-void Contract::SaveContract()
+Contract::Contract(
+		ContractData &_contract,
+		std::map<uint32, ContractRequestItem> _requestItemTypeList,
+		std::map<uint32, ContractItem> _itemList)
+: m_contract( _contract ),
+  m_requestItemTypeList(_requestItemTypeList),
+  m_itemList(_itemList)
 {
-    _log( ITEM__TRACE, "Saving Contract %u.", itemID() );
-
-    sLog.Debug( "Contract::SaveContract()", "Saving all Contract info and items list to DB for Contract %d...", m_contractID );
-    // character data
-    m_factory.db().SaveContract(
-        itemID(),
-    );
+    // allow contracts to be only singletons
+    // assert( singleton() && quantity() == 1);
+	// the contract itself is not an item, so i think we dont need this
 }
+
 

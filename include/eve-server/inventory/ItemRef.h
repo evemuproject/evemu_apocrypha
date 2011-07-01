@@ -77,9 +77,6 @@ typedef RefPtr<const Station>            StationConstRef;
 typedef RefPtr<Contract>				 ContractRef;
 typedef RefPtr<const Contract>			 ContractConstRef;
 
-typedef RefPtr<ContractItem>			 ContractItemRef;
-typedef RefPtr<const ContractItem>		 ContractItemConstRef;
-
 typedef RefPtr<ContractRequestItem>		 ContractRequestItemRef;
 typedef RefPtr<const ContractRequestItem> ContractRequestItemConstRef;
 

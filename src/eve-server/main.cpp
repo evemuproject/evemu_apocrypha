@@ -126,6 +126,7 @@ int main( int argc, char* argv[] )
 
 	// make the contract manager
 	ContractManager* contractManager = new ContractManager();
+	contractManager->Load( item_factory );
 
     //now, the service manager...
     PyServiceMgr services( 888444, sEntityList, item_factory );

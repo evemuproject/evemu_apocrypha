@@ -49,70 +49,6 @@ public:
 	uint32 m_quantity;
 };
 
-// Main class for contract items
-class ContractItem
-	: public InventoryItem
-{
-	friend class InventoryItem;
-public:
-	/**
-	 * Loads contract items
-	 *
-	 * @param[in] factory
-	 * @param[in] contractID ID of contract item to load.
-	 * @return Pointer to new ContractItem object; NULL if fails.
-	 */
-	static ContractItemRef Load(ItemFactory &factory, uint32 itemID);
-	/**
-	 * Spawns new contract item
-	 *
-	 * @param[in] factory
-	 * @param[in] data Item data of new contract item
-	 * @return Pointer to new ContractItem object; NULL if fails.
-	 */
-	static ContractItemRef Spawn(ItemFactory &factory, ItemData &data);
-protected:
-	ContractItem(
-		ItemFactory &_factory,
-		uint32 _itemID,
-		const ItemType &_type,
-		const ItemData &_data);
-
-	/*
-	 * Member functions
-	 */
-	using InventoryItem::_Load;
-
-	// Template loader:
-	template<class _Ty>
-	static RefPtr<_Ty> _LoadItem(ItemFactory &factory, uint32 itemID,
-		// InventoryItem stuff:
-		const ItemType &type, const ItemData &data)
-	{
-		// check it's a contract item
-		if( data.flag != 6 )
-		{
-			sLog.Error("ContractItem", "Trying to load %d as ContractItem.", data.flag );
-			return RefPtr<_Ty>();
-		}
-
-		// no additional stuff
-
-		return _Ty::template _LoadContractItem<_Ty>( factory, itemID, type, data );
-	}
-
-	// Actual loading stuff:
-	template<class _Ty>
-	static RefPtr<_Ty> _LoadContractItem(ItemFactory &factory, uint32 itemID,
-		// InventoryItem stuff:
-		const ItemType &type, const ItemData &data
-	);
-
-	static uint32 _Spawn(ItemFactory &factory,
-		// InventoryItem stuff:
-		ItemData &data
-	);
-};
 
 // Contracts are NOT items
 class ContractData
@@ -245,30 +181,14 @@ public:
 	Contract(
 		ContractData &_contract,
 		std::map<uint32, ContractRequestItem> _requestItemTypeList,
-		std::map<uint32, ContractItem> _itemList
+		std::map<uint32, InventoryItemRef> _itemList
 		);
 
 	ContractData &m_contract;
 	std::map<uint32, ContractRequestItem> m_requestItemTypeList;
-	std::map<uint32, ContractItem> m_itemList;
+	std::map<uint32, InventoryItemRef> m_itemList;
 
 protected:
-	/*
-	 * Member functions:
-	 */
-
-	// Actual loading stuff:
-	/*template<class _Ty>
-	static RefPtr<_Ty> _LoadContract( uint32 characterID );
-
-	bool _Load();
-
-	static uint32 _Spawn( );
-
-	uint32 inventoryID() const { return m_contract.m_contractID; }
-	PyRep *GetItem() const { return new PyNone(); }
-
-	void AddItem(InventoryItemRef item);*/
 
 };
 

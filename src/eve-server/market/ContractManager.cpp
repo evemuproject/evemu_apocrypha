@@ -29,12 +29,37 @@
 ContractManager::ContractManager()
 {
 	// ContractManager creation
+}
+
+void ContractManager::Load( ItemFactory item_factory )
+{
 	m_contracts = m_db.LoadContracts();
+	std::map<uint32, uint32> items;
+	uint32 j = 0;
+
+	for( size_t i = 0; i < m_contracts.size(); i ++)
+	{
+		items = m_db.GetContractItems( m_contracts.at( i )->contractID() );
+		for( size_t n = 0; n < items.size(); n ++ )
+		{
+			m_contracts.at( i )->m_itemList.insert( m_contracts.at( i )->m_itemList.begin(), m_contracts.at( i )->m_itemList.end() );
+			j = m_contracts.at( i )->m_itemList.size();
+			m_contracts.at( i )->m_itemList.at( j ) = item_factory.GetItem( items.at( n ) );
+		}
+	}
+		
 }
 
 ContractManager::~ContractManager()
 {
 	// ContractManager destructor
+	sLog.Debug( "ContractManager", "Saving contract information to the DB" );
+
+	for( size_t i = 0; i < m_contracts.size(); i ++ )
+	{
+		m_db.SaveContract( m_contracts.at( i ) );
+	}
+
 	sLog.Debug( "ContractManager", "Destroying contract manager..." );
 	clear();
 	sLog.Debug( "ContractManager", "Contract manager destroyed" );
@@ -42,7 +67,7 @@ ContractManager::~ContractManager()
 
 void ContractManager::clear()
 {
-	std::map<uint32, Contract>::const_iterator cur, end;
+	std::map<uint32, ContractRef>::const_iterator cur, end;
 	cur = m_contracts.begin();
 	end = m_contracts.end();
 	for(; cur != end; cur++)
@@ -52,20 +77,57 @@ void ContractManager::clear()
 	m_contracts.clear();
 }
 
-void ContractManager::UpdateContract()
+bool ContractManager::UpdateContract( ContractRef contractInfo )
 {
+	uint32 i = 0;
+	for( i = 0; i < m_contracts.size(); i ++ )
+	{
+		if( m_contracts.at( i )->m_contract.m_contractID == contractInfo->m_contract.m_contractID )
+		{
+			m_contracts.at( i ) = contractInfo;
+			return true;
+		}
+	}
+	return false;
 }
 
-void ContractManager::AddContract()
+void ContractManager::AddContract( ContractRef contractInfo )
 {
+	uint32 i = 0;
+	m_contracts.insert( m_contracts.begin(), m_contracts.end() );
+	i = m_contracts.size();
+	m_contracts.at( i ) = contractInfo;
 }
 
-/*Contract ContractManager::GetContract(uint32 contractID)
+bool ContractManager::GetContract( uint32 contractID, ContractRef &contract )
 {
-}*/
+	uint32 i = 0;
+	for( i = 0; i < m_contracts.size(); i ++ )
+	{
+		if( m_contracts.at( i )->m_contract.m_contractID == contractID )
+		{
+			contract = m_contracts.at( i );
+			return true;
+		}
+	}
 
-void ContractManager::RemoveContract()
+	return false;
+
+}
+
+bool ContractManager::RemoveContract( uint32 contractID )
 {
+	uint32 i = 0;
+	for( i = 0; i < m_contracts.size(); i ++)
+	{
+		if( m_contracts.at( i )->m_contract.m_contractID == contractID )
+		{
+			m_contracts.erase( i );
+			return true;
+		}
+	}
+
+	return false;
 }
 
 

@@ -43,10 +43,12 @@ typedef enum{
 }contractStatus;
 
 class ContractDB
-: public ServiceDB
 {
 public:
-	std::map<uint32, Contract> LoadContracts();
+	std::map<uint32, ContractRef> LoadContracts();
+	bool SaveContract( ContractRef contract );
+	std::map<uint32, uint32> GetContractItems( uint32 contractID );
+	ContractRef GetContractInfo( uint32 contractID );
 protected:
 	
 };

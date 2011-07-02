@@ -37,11 +37,11 @@ public:
 	void Load( ItemFactory item_factory );
 
 	//
-	bool UpdateContract( ContractRef contractInfo );
+	bool UpdateContract( Contract* contractInfo );
 	//
-	void AddContract( ContractRef contractInfo );
+	void AddContract( Contract* contractInfo );
     //
-    bool GetContract( uint32 contractID, ContractRef &contract);
+    bool GetContract( uint32 contractID, Contract* contract);
 	//
 	bool RemoveContract( uint32 contractID );
 
@@ -50,7 +50,7 @@ public:
 protected:
 	ContractDB m_db;
 	// container for active contract objects
-	std::map<uint32, ContractRef> m_contracts;	//we own these
+	std::map<uint32, Contract*> m_contracts;	//we own these
 };
 
 #endif /* !__CONTRACTMANAGER__H__INCL__ */

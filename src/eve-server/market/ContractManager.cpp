@@ -33,13 +33,13 @@ ContractManager::ContractManager()
 
 void ContractManager::Load( ItemFactory item_factory )
 {
-	m_contracts = m_db.LoadContracts();
+	m_db.LoadContracts( m_contracts );
 	std::map<uint32, uint32> items;
 	uint32 j = 0;
 
 	for( size_t i = 0; i < m_contracts.size(); i ++)
 	{
-		items = m_db.GetContractItems( m_contracts.at( i )->contractID() );
+		m_db.GetContractItems( m_contracts.at( i )->m_contract.m_contractID, items );
 		for( size_t n = 0; n < items.size(); n ++ )
 		{
 			m_contracts.at( i )->m_itemList.insert( m_contracts.at( i )->m_itemList.begin(), m_contracts.at( i )->m_itemList.end() );
@@ -67,7 +67,7 @@ ContractManager::~ContractManager()
 
 void ContractManager::clear()
 {
-	std::map<uint32, ContractRef>::const_iterator cur, end;
+	std::map<uint32, Contract*>::const_iterator cur, end;
 	cur = m_contracts.begin();
 	end = m_contracts.end();
 	for(; cur != end; cur++)
@@ -77,7 +77,7 @@ void ContractManager::clear()
 	m_contracts.clear();
 }
 
-bool ContractManager::UpdateContract( ContractRef contractInfo )
+bool ContractManager::UpdateContract( Contract* contractInfo )
 {
 	uint32 i = 0;
 	for( i = 0; i < m_contracts.size(); i ++ )
@@ -91,7 +91,7 @@ bool ContractManager::UpdateContract( ContractRef contractInfo )
 	return false;
 }
 
-void ContractManager::AddContract( ContractRef contractInfo )
+void ContractManager::AddContract( Contract* contractInfo )
 {
 	uint32 i = 0;
 	m_contracts.insert( m_contracts.begin(), m_contracts.end() );
@@ -99,7 +99,7 @@ void ContractManager::AddContract( ContractRef contractInfo )
 	m_contracts.at( i ) = contractInfo;
 }
 
-bool ContractManager::GetContract( uint32 contractID, ContractRef &contract )
+bool ContractManager::GetContract( uint32 contractID, Contract* contract )
 {
 	uint32 i = 0;
 	for( i = 0; i < m_contracts.size(); i ++ )

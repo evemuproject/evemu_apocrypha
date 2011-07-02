@@ -27,9 +27,9 @@
 #include "EVEServerPCH.h"
 
 
-std::map<uint32, ContractRef> ContractDB::LoadContracts()
+bool ContractDB::LoadContracts( std::map<uint32, Contract*> &into )
 {
-	std::map<uint32, ContractRef> m_contracts;
+	std::map<uint32, Contract*> m_contracts;
 	DBQueryResult res, items;
 	DBResultRow row, item;
 
@@ -69,7 +69,7 @@ std::map<uint32, ContractRef> ContractDB::LoadContracts()
 		" FROM contract" ))
 	{
 		_log(DATABASE__ERROR, "Error loading contracts. Error: %s", res.error.c_str() );
-		return m_contracts;
+		return false;
 	}
 
 	uint32 i = 0;
@@ -129,7 +129,7 @@ std::map<uint32, ContractRef> ContractDB::LoadContracts()
 			" WHERE contractID=%u AND get=1", row.GetUInt( 0 ) ))
 		{
 			_log(DATABASE__ERROR, "Error loading items for contract %u", row.GetUInt( 0 ) );
-			return m_contracts; // Return the actual load state
+			return false; // Return the actual load state
 		}
 			
 		while( items.GetRow( item ) )
@@ -141,10 +141,10 @@ std::map<uint32, ContractRef> ContractDB::LoadContracts()
 		}
 	}
 
-	return m_contracts;
+	return true;
 }
 
-std::map<uint32, uint32> GetContractItems( uint32 contractID )
+bool GetContractItems( uint32 contractID, std::map<uint32, uint32>& into )
 {
 	DBQueryResult res;
 	DBResultRow row;
@@ -157,7 +157,7 @@ std::map<uint32, uint32> GetContractItems( uint32 contractID )
 		" WHERE contractID=%u AND get=0", contractID ))
 	{
 		_log(DATABASE__ERROR, "Error loading items for contract %d", contractID );
-		return data; // Return the actual load state...
+		return false; // Return the actual load state...
 	}
 
 	while( res.GetRow( row ) )
@@ -166,10 +166,10 @@ std::map<uint32, uint32> GetContractItems( uint32 contractID )
 		data.at( data.size() ) = row.GetUInt( 0 );
 	}
 
-	return data;
+	return true;
 }
 
-bool ContractDB::SaveContract( ContractRef contract )
+bool ContractDB::SaveContract( Contract* contract )
 {
 	DBerror err;
 
@@ -283,9 +283,9 @@ bool ContractDB::SaveContract( ContractRef contract )
 }
 
 
-ContractRef GetContractInfo( uint32 contractID )
+Contract* GetContractInfo( uint32 contractID )
 {
-	ContractRef contract;
+	Contract* contract;
 	DBQueryResult res, items;
 	DBResultRow row, item;
 

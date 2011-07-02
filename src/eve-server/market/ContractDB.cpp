@@ -27,9 +27,9 @@
 #include "EVEServerPCH.h"
 
 
-bool ContractDB::LoadContracts( std::map<uint32, Contract*> &into )
+bool ContractDB::LoadContracts( std::vector<Contract*> &into )
 {
-	std::map<uint32, Contract*> m_contracts;
+	std::vector<Contract*> contracts;
 	DBQueryResult res, items;
 	DBResultRow row, item;
 
@@ -76,11 +76,6 @@ bool ContractDB::LoadContracts( std::map<uint32, Contract*> &into )
 	uint32 n = 0;
 	while( res.GetRow( row ) )
 	{
-		// Insert new item
-		m_contracts.insert( m_contracts.begin(), m_contracts.end() );
-
-		// Get the index of the inserted item
-		i = m_contracts.size();
 
 		// Fill ContractData with the data from the DB
 		ContractData* cData = new ContractData(
@@ -118,8 +113,8 @@ bool ContractDB::LoadContracts( std::map<uint32, Contract*> &into )
 			row.GetUInt( 0 )
 			);
 
-		// Assign m_contract a pointer to cData
-		m_contracts.at( i )->m_contract = *cData;
+		// Assign contract a pointer to cData
+		contracts.at( i )->m_contract = *cData;
 
 		if( !sDatabase.RunQuery(items,
 			"SELECT"
@@ -134,21 +129,21 @@ bool ContractDB::LoadContracts( std::map<uint32, Contract*> &into )
 			
 		while( items.GetRow( item ) )
 		{
-			m_contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.insert( m_contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.begin(), m_contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.end() );
-			n = m_contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.size();
-			m_contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.at( n ).m_typeID = item.GetUInt( 0 );
-			m_contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.at( n ).m_quantity = item.GetUInt( 1 );
+			contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.insert( contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.begin(), contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.end() );
+			n = contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.size();
+			contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.at( n ).m_typeID = item.GetUInt( 0 );
+			contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.at( n ).m_quantity = item.GetUInt( 1 );
 		}
 	}
 
 	return true;
 }
 
-bool GetContractItems( uint32 contractID, std::map<uint32, uint32>& into )
+bool GetContractItems( uint32 contractID, std::vector<uint32>& into )
 {
 	DBQueryResult res;
 	DBResultRow row;
-	std::map<uint32, uint32> data;
+	std::vector<uint32> data;
 
 	if( !sDatabase.RunQuery(res,
 		"SELECT"
@@ -162,8 +157,7 @@ bool GetContractItems( uint32 contractID, std::map<uint32, uint32>& into )
 
 	while( res.GetRow( row ) )
 	{
-		data.insert( data.begin(), data.end() );
-		data.at( data.size() ) = row.GetUInt( 0 );
+		into.push_back( row.GetUInt( 0 ) );
 	}
 
 	return true;
@@ -396,6 +390,22 @@ Contract* GetContractInfo( uint32 contractID )
 
 	return contract;
 }
+
+
+bool PrepareDBForContractsSave()
+{
+	DBerror err;
+
+	if( !sDatabase.RunQuery(err,
+		"DELETE FROM contract" ))
+	{
+		_log(DATABASE__ERROR, "Error deleting contracts for final contract saving" );
+		return false;
+	}
+
+	return true;
+}
+
 
 
 

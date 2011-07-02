@@ -50,7 +50,7 @@ public:
 protected:
 	ContractDB m_db;
 	// container for active contract objects
-	std::map<uint32, Contract*> m_contracts;	//we own these
+	std::vector<Contract*> m_contracts;	//we own these
 };
 
 #endif /* !__CONTRACTMANAGER__H__INCL__ */

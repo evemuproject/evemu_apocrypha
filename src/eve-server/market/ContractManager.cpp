@@ -34,7 +34,7 @@ ContractManager::ContractManager()
 void ContractManager::Load( ItemFactory item_factory )
 {
 	m_db.LoadContracts( m_contracts );
-	std::map<uint32, uint32> items;
+	std::vector<uint32> items;
 	uint32 j = 0;
 
 	for( size_t i = 0; i < m_contracts.size(); i ++)
@@ -54,7 +54,7 @@ ContractManager::~ContractManager()
 {
 	// ContractManager destructor
 	sLog.Debug( "ContractManager", "Saving contract information to the DB" );
-
+	if( !m_db.PrepareDBForContractsSave() )return;
 	for( size_t i = 0; i < m_contracts.size(); i ++ )
 	{
 		m_db.SaveContract( m_contracts.at( i ) );
@@ -67,7 +67,7 @@ ContractManager::~ContractManager()
 
 void ContractManager::clear()
 {
-	std::map<uint32, Contract*>::const_iterator cur, end;
+	std::vector<Contract*>::const_iterator cur, end;
 	cur = m_contracts.begin();
 	end = m_contracts.end();
 	for(; cur != end; cur++)
@@ -94,7 +94,7 @@ bool ContractManager::UpdateContract( Contract* contractInfo )
 void ContractManager::AddContract( Contract* contractInfo )
 {
 	uint32 i = 0;
-	m_contracts.insert( m_contracts.begin(), m_contracts.end() );
+	m_contracts.insert( m_contracts.begin(), m_contracts.begin(), m_contracts.end() );
 	i = m_contracts.size();
 	m_contracts.at( i ) = contractInfo;
 }
@@ -122,7 +122,7 @@ bool ContractManager::RemoveContract( uint32 contractID )
 	{
 		if( m_contracts.at( i )->m_contract.m_contractID == contractID )
 		{
-			m_contracts.erase( i );
+			m_contracts.erase( m_contracts.begin() + i, m_contracts.begin() + i );
 			return true;
 		}
 	}

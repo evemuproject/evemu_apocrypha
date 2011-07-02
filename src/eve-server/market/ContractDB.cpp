@@ -139,11 +139,10 @@ bool ContractDB::LoadContracts( std::vector<Contract*> &into )
 	return true;
 }
 
-bool GetContractItems( uint32 contractID, std::vector<uint32>& into )
+bool ContractDB::GetContractItems( uint32 contractID, std::vector<uint32>& into )
 {
 	DBQueryResult res;
 	DBResultRow row;
-	std::vector<uint32> data;
 
 	if( !sDatabase.RunQuery(res,
 		"SELECT"
@@ -392,7 +391,7 @@ Contract* GetContractInfo( uint32 contractID )
 }
 
 
-bool PrepareDBForContractsSave()
+bool ContractDB::PrepareDBForContractsSave()
 {
 	DBerror err;
 

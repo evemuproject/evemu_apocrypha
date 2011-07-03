@@ -72,7 +72,8 @@ ContractData::ContractData(
 		bool _requiresAttention,
 		uint32 _allianceID,
 		uint32 _issuerWalletKey,
-		uint32 _crateID
+		uint32 _crateID,
+		uint64 _lastChange
 	)
 	: m_contractID(_contractID),
   m_issuerID(_issuerID),
@@ -105,7 +106,8 @@ ContractData::ContractData(
   m_requiresAttention(_requiresAttention),
   m_allianceID(_allianceID),
   m_issuerWalletKey(_issuerWalletKey),
-  m_crateID(_crateID)
+  m_crateID(_crateID),
+  m_lastChange(_lastChange)
 {
 
 }

@@ -86,7 +86,8 @@ public:
 		bool _requiresAttention,
 		uint32 _allianceID,
 		uint32 _issuerWalletKey,
-		uint32 _crateID
+		uint32 _crateID,
+		uint64 _lastChange
 	);
 
 	uint32 m_contractID;
@@ -121,6 +122,7 @@ public:
 	uint32 m_allianceID;
 	uint32 m_issuerWalletKey;
 	uint32 m_crateID;
+	uint64 m_lastChange;
 };
 
 class Contract

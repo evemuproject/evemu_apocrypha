@@ -47,10 +47,11 @@ public:
 
 	void clear();
 
-protected:
-	ContractDB m_db;
 	// container for active contract objects
 	std::vector<Contract*> m_contracts;	//we own these
+
+protected:
+	ContractDB m_db;
 };
 
 #endif /* !__CONTRACTMANAGER__H__INCL__ */

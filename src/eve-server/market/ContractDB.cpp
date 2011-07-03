@@ -65,7 +65,8 @@ bool ContractDB::LoadContracts( std::vector<Contract*> &into )
 		" volume,"
 		" issuerWalletKey,"
 		" issuerAllianceID,"
-		" acceptorWalletKey"
+		" acceptorWalletKey,"
+		" lastChange"
 		" FROM contract" ))
 	{
 		_log(DATABASE__ERROR, "Error loading contracts. Error: %s", res.error.c_str() );
@@ -110,7 +111,8 @@ bool ContractDB::LoadContracts( std::vector<Contract*> &into )
 			row.GetUInt( 28 ), // bool
 			row.GetUInt( 29 ),
 			row.GetUInt( 30 ),
-			row.GetUInt( 0 )
+			row.GetUInt( 0 ),
+			row.GetUInt( 31 )
 			);
 
 		// Assign contract a pointer to cData
@@ -118,7 +120,7 @@ bool ContractDB::LoadContracts( std::vector<Contract*> &into )
 
 		if( !sDatabase.RunQuery(items,
 			"SELECT"
-			" typeID,"
+			" itemTypeID,"
 			" quantity"
 			" FROM contract_items"
 			" WHERE contractID=%u AND get=1", row.GetUInt( 0 ) ))
@@ -199,7 +201,8 @@ bool ContractDB::SaveContract( Contract* contract )
 		" volume," // This should be the volume of all the items
 		" issuerWalletKey,"
 		" issuerAllianceID,"
-		" crateID"
+		" crateID,"
+		" lastChange"
 		")VALUES("
 		"NULL, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %f, %f, '%s', '%s', %u, 0, false, NULL, " I64u ", " I64u ", NULL, " I64u ", %f, %d, %d, %u)",
 		contract->m_contract.m_issuerID, contract->m_contract.m_issuerCorpID, contract->m_contract.m_type, contract->m_contract.m_avail,
@@ -209,7 +212,7 @@ bool ContractDB::SaveContract( Contract* contract )
 		contract->m_contract.m_collateral, contract->m_contract.m_title, contract->m_contract.m_description,
 		contract->m_contract.m_forCorp, contract->m_contract.m_dateIssued, contract->m_contract.m_dateExpired,
 		contract->m_contract.m_dateExpired,	contract->m_contract.m_volume, contract->m_contract.m_issuerWalletKey,
-		contract->m_contract.m_allianceID, contract->m_contract.m_crateID))
+		contract->m_contract.m_allianceID, contract->m_contract.m_crateID, contract->m_contract.m_lastChange))
 	{
 		codelog(DATABASE__ERROR, "Error in query: %s", err.c_str() );
 		return false;
@@ -231,7 +234,7 @@ bool ContractDB::SaveContract( Contract* contract )
 		typeID = contract->m_itemList.at( i )->typeID();
 
 		char buf[ 128 ];
-		snprintf( buf, 128, "(NULL, %u, %u, %u, %u, %u, %u, false, false)", itemID, contractID, quantity, flag, typeID, ownerID );
+		snprintf( buf, 128, "(NULL, %u, %u, %u, true, %u)", contractID, typeID, quantity, itemID );
 
 		if( i != 0 )
             query += ',';
@@ -243,7 +246,7 @@ bool ContractDB::SaveContract( Contract* contract )
 
 	if( !sDatabase.RunQuery( err,
 		"INSERT"
-		" INTO contract_items(id, itemID, contractID, quantity, flag, typeID, ownerID, inCrate, get)"
+		" INTO contract_items(id, contractID, itemTypeID, quantity, inCrate, itemID)"
 		" VALUES %s", query.c_str() ))
 	{
 		_log(DATABASE__ERROR, "Failed to insert Contract items for contract %u", contractID );
@@ -257,7 +260,7 @@ bool ContractDB::SaveContract( Contract* contract )
 		typeID = contract->m_requestItemTypeList.at( i ).m_typeID;
 
 		char buf[ 128 ];
-		snprintf( buf, 128, "(NULL, NULL, %u, %u, NULL, %u, NULL, false, false)", contractID, quantity, typeID );
+		snprintf( buf, 128, "(NULL, %u, %u, %u, false, NULL)", contractID, typeID, quantity );
 
 		if( i != 0 )
             query += ',';
@@ -266,7 +269,7 @@ bool ContractDB::SaveContract( Contract* contract )
 
 	if( !sDatabase.RunQuery( err,
 		"INSERT"
-		" INTO contract_items(id, itemID, contractID, quantity, flag, typeID, ownerID, inCrate, get)"
+		" INTO contract_items(id, contractID, itemTypeID, quantity, inCrate, itemID)"
 		" VALUES %s", query.c_str() ))
 	{
 		_log(DATABASE__ERROR, "Failed to insert Contract items for contract %u", contractID );
@@ -314,7 +317,8 @@ Contract* GetContractInfo( uint32 contractID )
 		" volume,"
 		" issuerWalletKey,"
 		" issuerAllianceID,"
-		" acceptorWalletKey"
+		" acceptorWalletKey,"
+		" lastChange"
 		" FROM contract"
 		" WHERE contractID=%u", contractID ))
 	{
@@ -360,7 +364,8 @@ Contract* GetContractInfo( uint32 contractID )
 		row.GetUInt( 28 ), // bool
 		row.GetUInt( 29 ),
 		row.GetUInt( 30 ),
-		row.GetUInt( 0 )
+		row.GetUInt( 0 ),
+		row.GetUInt( 31 )
 		);
 		
 	// Assign m_contract a pointer to cData
@@ -405,6 +410,19 @@ bool ContractDB::PrepareDBForContractsSave()
 	return true;
 }
 
+
+PyRep *ContractDB::GetPlayerItemsInStation( uint32 characterID, uint32 stationID )
+{
+	// Hack into NULL
+	DBQueryResult res;
+
+	if(!sDatabase.RunQuery(res,
+		"SELECT itemID, itemName, typeID, ownerID, locationID, flag, contraband, singleton, quantity, x, y, z, custominfo, 0 AS categoryID, 0 AS groupID FROM entity WHERE  ownerID=%d && locationID=%d && flag=4", characterID, stationID)){
+			codelog( MARKET__ERROR, "Error in query: %s", res.error.c_str() );
+			return NULL;
+	}
+	return DBResultToRowset( res );
+}
 
 
 

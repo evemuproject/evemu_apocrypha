@@ -50,6 +50,7 @@ public:
 	bool GetContractItems( uint32 contractID, std::vector<uint32>& into );
 	Contract* GetContractInfo( uint32 contractID );
 	bool PrepareDBForContractsSave();
+	PyRep *GetPlayerItemsInStation( uint32 characterID, uint32 stationID );
 protected:
 	
 };

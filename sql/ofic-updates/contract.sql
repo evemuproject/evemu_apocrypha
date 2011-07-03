@@ -59,7 +59,6 @@ CREATE TABLE IF NOT EXISTS `contract` (
   `issuerWalletKey` int(10) unsigned NOT NULL DEFAULT '0',
   `issuerAllianceID` int(10) unsigned NOT NULL DEFAULT '0',
   `acceptorWalletKey` int(10) unsigned NOT NULL DEFAULT '0',
-  `lastChange` bigint(20) NOT NULL,
   PRIMARY KEY (`contractID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=6 ;
 

@@ -43,10 +43,14 @@ typedef enum{
 }contractStatus;
 
 class ContractDB
-: public ServiceDB
 {
 public:
-	std::map<uint32, Contract> LoadContracts();
+	bool LoadContracts( std::vector<Contract*> &into );
+	bool SaveContract( Contract* contract );
+	bool GetContractItems( uint32 contractID, std::vector<uint32>& into );
+	Contract* GetContractInfo( uint32 contractID );
+	bool PrepareDBForContractsSave();
+	PyRep *GetPlayerItemsInStation( uint32 characterID, uint32 stationID );
 protected:
 	
 };

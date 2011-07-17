@@ -20,7 +20,7 @@
 	Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 	http://www.gnu.org/copyleft/lesser.txt.
 	------------------------------------------------------------------------------------
-	Author:		Aknor Jaden, adapted from /include/eve-server/system/BubbleManager.h authored by Zhur
+	Author:		Almamu, Aknor Jaden, adapted from /include/eve-server/system/BubbleManager.h authored by Zhur
 */
 
 #ifndef __CONTRACTMANAGER_H_INCL__
@@ -34,20 +34,24 @@ public:
 	ContractManager();
 	~ContractManager();
 
+	void Load( ItemFactory item_factory );
+
 	//
-	void UpdateContract();
+	bool UpdateContract( Contract* contractInfo );
 	//
-	void AddContract();
+	void AddContract( Contract* contractInfo );
     //
-    // ContractRef GetContract(uint32 contractID);
+    bool GetContract( uint32 contractID, Contract* contract);
 	//
-	void RemoveContract();
+	bool RemoveContract( uint32 contractID );
+
 	void clear();
+
+	// container for active contract objects
+	std::vector<Contract*> m_contracts;	//we own these
 
 protected:
 	ContractDB m_db;
-	// container for active contract objects
-	std::map<uint32, Contract> m_contracts;	//we own these
 };
 
 #endif /* !__CONTRACTMANAGER__H__INCL__ */

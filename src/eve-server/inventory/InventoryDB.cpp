@@ -927,7 +927,8 @@ bool InventoryDB::GetCharacter(uint32 characterID, CharacterData &into) {
         "  chr.careerSpecialityID,"
         "  chr.startDateTime,"
         "  chr.createDateTime,"
-        "  chr.corporationDateTime"
+        "  chr.corporationDateTime,"
+		"  chr.lastLogin"
         " FROM character_ AS chr"
         " LEFT JOIN corporation AS crp USING (corporationID)"
         " WHERE characterID = %u",

@@ -126,6 +126,7 @@ int main( int argc, char* argv[] )
 
 	// make the contract manager
 	ContractManager* contractManager = new ContractManager();
+	contractManager->Load( item_factory );
 
     //now, the service manager...
     PyServiceMgr services( 888444, sEntityList, item_factory );
@@ -183,7 +184,7 @@ int main( int argc, char* argv[] )
     services.RegisterService(new PetitionerService(&services));
     services.RegisterService(new SlashService(&services, &command_dispatcher));
     services.RegisterService(new MarketProxyService(&services));
-    services.RegisterService(new ContractMgrService(&services));
+    services.RegisterService(new ContractMgrService(&services, contractManager));
     services.RegisterService(new ReprocessingService(&services));
     services.RegisterService(new FactoryService(&services));
     services.RegisterService(new RamProxyService(&services));

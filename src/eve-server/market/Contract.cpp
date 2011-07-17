@@ -38,60 +38,6 @@ ContractRequestItem::ContractRequestItem(
 }
 
 /*
- * ContractItem
- */
-ContractItem::ContractItem(
-	ItemFactory &_factory,
-	uint32 _itemID,
-	const ItemType &_type,
-	const ItemData &_data
-	)
-: InventoryItem(_factory, _itemID, _type, _data)
-{
-}
-
-ContractItemRef ContractItem::Load(ItemFactory &factory, uint32 itemID)
-{
-	return InventoryItem::Load<ContractItem>( factory, itemID );
-}
-
-template<class _Ty>
-RefPtr<_Ty> ContractItem::_LoadContractItem(ItemFactory &factory, uint32 itemID,
-	// InventoryItem stuff:
-	const ItemType &type, const ItemData &data)
-{
-	return ContractItemRef( new ContractItem( factory, itemID, type, data ) );
-}
-
-ContractItemRef ContractItem::Spawn(ItemFactory &factory, ItemData &data)
-{
-	uint32 itemID = _Spawn( factory, data );
-	if( itemID == 0 )
-		return ContractItemRef();
-
-    ContractItemRef contractItemRef = ContractItem::Load( factory, itemID );
-
-    return contractItemRef;
-}
-
-uint32 ContractItem::_Spawn(ItemFactory &factory, ItemData &data)
-{
-	// check it's a contractItem
-	/*const ItemType *type = factory.GetType( data.typeID );
-	if( type == NULL )
-		return 0;*/
-
-	if( data.flag != 6 )
-	{
-		_log( ITEM__ERROR, "Trying to spawn %d as ContractItem.", data.flag );
-		return 0;
-	}
-
-	// spawn item, nothing else
-	return InventoryItem::_Spawn( factory, data );
-}
-
-/*
  * ContractData
  */
 ContractData::ContractData(
@@ -126,7 +72,8 @@ ContractData::ContractData(
 		bool _requiresAttention,
 		uint32 _allianceID,
 		uint32 _issuerWalletKey,
-		uint32 _crateID
+		uint32 _crateID,
+		uint64 _lastChange
 	)
 	: m_contractID(_contractID),
   m_issuerID(_issuerID),
@@ -159,7 +106,8 @@ ContractData::ContractData(
   m_requiresAttention(_requiresAttention),
   m_allianceID(_allianceID),
   m_issuerWalletKey(_issuerWalletKey),
-  m_crateID(_crateID)
+  m_crateID(_crateID),
+  m_lastChange(_lastChange)
 {
 
 }
@@ -167,14 +115,13 @@ ContractData::ContractData(
 Contract::Contract(
 		ContractData &_contract,
 		std::map<uint32, ContractRequestItem> _requestItemTypeList,
-		std::map<uint32, ContractItem> _itemList)
+		std::map<uint32, InventoryItemRef> _itemList
+		)
 : m_contract( _contract ),
   m_requestItemTypeList(_requestItemTypeList),
   m_itemList(_itemList)
 {
-    // allow contracts to be only singletons
-    // assert( singleton() && quantity() == 1);
-	// the contract itself is not an item, so i think we dont need this
 }
+
 
 

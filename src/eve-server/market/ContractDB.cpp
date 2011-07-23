@@ -27,10 +27,9 @@
 #include "EVEServerPCH.h"
 
 
-bool ContractDB::LoadContracts( std::vector<Contract*> &into )
+bool ContractDB::LoadContracts( std::map<uint32, ContractRef> &into, ItemFactory &item_factory, ContractFactory &contract_factory )
 {
-	std::vector<Contract*> contracts;
-	DBQueryResult res, items;
+	DBQueryResult res, itemRes;
 	DBResultRow row, item;
 
 	if( !sDatabase.RunQuery( res,
@@ -66,21 +65,20 @@ bool ContractDB::LoadContracts( std::vector<Contract*> &into )
 		" issuerWalletKey,"
 		" issuerAllianceID,"
 		" acceptorWalletKey,"
-		" lastChange"
 		" FROM contract" ))
 	{
 		_log(DATABASE__ERROR, "Error loading contracts. Error: %s", res.error.c_str() );
-		return false;
+		return NULL;
 	}
 
 	uint32 i = 0;
 	uint32 n = 0;
 	while( res.GetRow( row ) )
 	{
+		uint32 contractID = row.GetUInt( 0 );
 
 		// Fill ContractData with the data from the DB
 		ContractData* cData = new ContractData(
-			row.GetUInt( 0 ),
 			row.GetUInt( 1 ),
 			row.GetUInt( 2 ),
 			row.GetUInt( 3 ),
@@ -111,46 +109,68 @@ bool ContractDB::LoadContracts( std::vector<Contract*> &into )
 			row.GetUInt( 28 ), // bool
 			row.GetUInt( 29 ),
 			row.GetUInt( 30 ),
-			row.GetUInt( 0 ),
 			row.GetUInt( 31 )
 			);
 
-		// Assign contract a pointer to cData
-		contracts.at( i )->m_contract = *cData;
+		std::map<uint32, ContractRequestItemRef> requestItem;
+		std::map<uint32, ContractGetItemsRef> items;
 
-		if( !sDatabase.RunQuery(items,
+		if( !sDatabase.RunQuery(itemRes,
 			"SELECT"
 			" itemTypeID,"
 			" quantity"
 			" FROM contract_items"
-			" WHERE contractID=%u AND get=1", row.GetUInt( 0 ) ))
+			" WHERE contractID=%u AND get=1", contractID ))
 		{
 			_log(DATABASE__ERROR, "Error loading items for contract %u", row.GetUInt( 0 ) );
 			return false; // Return the actual load state
 		}
 			
-		while( items.GetRow( item ) )
+		while( itemRes.GetRow( item ) )
 		{
-			contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.insert( contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.begin(), contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.end() );
-			n = contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.size();
-			contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.at( n ).m_typeID = item.GetUInt( 0 );
-			contracts.at( row.GetUInt( 0 ) )->m_requestItemTypeList.at( n ).m_quantity = item.GetUInt( 1 );
+			ContractRequestItemRef requestItemRef;
+			requestItemRef->m_typeID = item.GetUInt( 0 );
+			requestItemRef->m_quantity = item.GetUInt( 1 );
+			requestItem.insert( std::make_pair( requestItemRef->m_typeID, requestItemRef ) ).first;
 		}
+
+		if( !sDatabase.RunQuery(itemRes,
+			"SELECT"
+			" itemID,"
+			" quantity"
+			" FROM contract_items"
+			" WHERE contractID=%u AND get=1", contractID ))
+		{
+			_log(DATABASE__ERROR, "Error loading items for contract %u", row.GetUInt( 0 ) );
+			return false; // Return the actual load state
+		}
+			
+		while( itemRes.GetRow( item ) )
+		{
+			ContractGetItemsRef itemRef;
+			itemRef->m_itemID = item.GetUInt( 0 );
+			itemRef->m_quantity = item.GetUInt( 1 );
+			items.insert( std::make_pair( itemRef->m_itemID, itemRef ) ).first;
+
+		}
+
+		into.insert( std::make_pair( contractID, ContractRef( new Contract( contractID, *cData, requestItem, items, item_factory, contract_factory ) ) ) ).first;
 	}
 
 	return true;
 }
 
-bool ContractDB::GetContractItems( uint32 contractID, std::vector<uint32>& into )
+bool ContractDB::GetContractItems( uint32 contractID, std::map<uint32, ContractGetItemsRef> &items, std::map<uint32, ContractRequestItemRef> &requestItems )
 {
 	DBQueryResult res;
 	DBResultRow row;
 
 	if( !sDatabase.RunQuery(res,
 		"SELECT"
-		" itemID"
-		" FROM contract_items"
-		" WHERE contractID=%u AND get=0", contractID ))
+		" itemTypeID"
+		" quantity"
+		" FROM contracts_items"
+		" WHERE contractID=%u AND inCrate = 0", contractID ))
 	{
 		_log(DATABASE__ERROR, "Error loading items for contract %d", contractID );
 		return false; // Return the actual load state...
@@ -158,17 +178,42 @@ bool ContractDB::GetContractItems( uint32 contractID, std::vector<uint32>& into 
 
 	while( res.GetRow( row ) )
 	{
-		into.push_back( row.GetUInt( 0 ) );
+		ContractRequestItemRef item;
+		item->m_typeID = row.GetUInt( 0 );
+		item->m_quantity = row.GetUInt( 1 );
+		requestItems.insert( std::make_pair( item->m_typeID, item ) );
+	}
+
+	if( !sDatabase.RunQuery(res,
+		"SELECT"
+		" itemID,"
+		" quantity"
+		" FROM contracts_items"
+		" WHERE contractID=%u AND inCrate = 1", contractID ))
+	{
+		_log(DATABASE__ERROR, "Error loading items for contract %d", contractID );
+		return false;
+	}
+
+	while( res.GetRow( row ) )
+	{
+		ContractGetItemsRef item;
+		item->m_itemID = row.GetUInt( 0 );
+		item->m_quantity = row.GetUInt( 1 );
+		items.insert( std::make_pair( item->m_itemID, item ) );
 	}
 
 	return true;
 }
 
-bool ContractDB::SaveContract( Contract* contract )
+bool ContractDB::SaveContract( ContractRef contract )
 {
+	uint32 contractID = 0;
 	DBerror err;
 
-	if(!sDatabase.RunQueryLID(err, contract->m_contract.m_contractID,
+	sDatabase.RunQuery( err,"DELETE FROM contract WHERE contractID=%u", contract->contractID() );
+	sDatabase.RunQuery( err, "DELETE FROM contracts_items WHERE contractID=%u", contract->contractID() );
+	if(!sDatabase.RunQueryLID(err, contractID, 
 		"INSERT INTO"
 		" contract("
 		" contractID,"
@@ -201,18 +246,17 @@ bool ContractDB::SaveContract( Contract* contract )
 		" volume," // This should be the volume of all the items
 		" issuerWalletKey,"
 		" issuerAllianceID,"
-		" crateID,"
-		" lastChange"
+		" crateID"
 		")VALUES("
 		"NULL, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %f, %f, '%s', '%s', %u, 0, false, NULL, " I64u ", " I64u ", NULL, " I64u ", %f, %d, %d, %u)",
-		contract->m_contract.m_issuerID, contract->m_contract.m_issuerCorpID, contract->m_contract.m_type, contract->m_contract.m_avail,
-		contract->m_contract.m_assigneeID, contract->m_contract.m_expiretime, contract->m_contract.m_duration, contract->m_contract.m_startStationID,
-		contract->m_contract.m_endStationID, contract->m_contract.m_startSolarSystemID, contract->m_contract.m_endSolarSystemID,
-		contract->m_contract.m_startRegionID, contract->m_contract.m_endRegionID, contract->m_contract.m_price, contract->m_contract.m_reward,
-		contract->m_contract.m_collateral, contract->m_contract.m_title, contract->m_contract.m_description,
-		contract->m_contract.m_forCorp, contract->m_contract.m_dateIssued, contract->m_contract.m_dateExpired,
-		contract->m_contract.m_dateExpired,	contract->m_contract.m_volume, contract->m_contract.m_issuerWalletKey,
-		contract->m_contract.m_allianceID, contract->m_contract.m_crateID, contract->m_contract.m_lastChange))
+		contract->issuerID(), contract->issuerCorpID(), contract->type(),
+		contract->avail(), contract->assigneeID(), contract->expiretime(), contract->duration(),
+		contract->startStationID(), contract->endStationID(), contract->startSolarSystemID(),
+		contract->endSolarSystemID(), contract->startRegionID(), contract->endRegionID(),
+		contract->price(), contract->reward(), contract->collateral(), contract->title(),
+		contract->description(),	contract->forCorp(), contract->dateIssued(),
+		contract->dateExpired(), contract->dateExpired(), contract->volume(),
+		contract->issuerWalletKey(),	contract->issuerAllianceID(), 0 ))
 	{
 		codelog(DATABASE__ERROR, "Error in query: %s", err.c_str() );
 		return false;
@@ -220,68 +264,73 @@ bool ContractDB::SaveContract( Contract* contract )
 
 	std::string query;
 	uint32 itemID = 0;
-	uint32 contractID = contract->m_contract.m_contractID;
 	uint32 quantity = 0;
-	uint32 flag = 0;
 	uint32 typeID = 0;
-	uint32 ownerID = contract->m_contract.m_issuerID;
 
-	for( size_t i = 0; i < contract->m_itemList.size(); i ++)
+	std::map<uint32, ContractRequestItemRef>::iterator cur, end;
+
+	cur = contract->requestItems().begin();
+	end = contract->requestItems().end();
+
+	for(; cur != end; cur++ )
 	{
-		itemID = contract->m_itemList.at( i )->itemID();
-		quantity = contract->m_itemList.at( i )->quantity();
-		flag = contract->m_itemList.at( i )->flag();
-		typeID = contract->m_itemList.at( i )->typeID();
-
-		char buf[ 128 ];
-		snprintf( buf, 128, "(NULL, %u, %u, %u, true, %u)", contractID, typeID, quantity, itemID );
-
-		if( i != 0 )
-            query += ',';
-        query += buf;
-
-		contract->m_itemList.at( i )->Move( contract->m_contract.m_contractID, flagBriefcase, true );
-		contract->m_itemList.at( i )->ChangeOwner( 1, true );
-	}
-
-	if( !sDatabase.RunQuery( err,
-		"INSERT"
-		" INTO contract_items(id, contractID, itemTypeID, quantity, inCrate, itemID)"
-		" VALUES %s", query.c_str() ))
-	{
-		_log(DATABASE__ERROR, "Failed to insert Contract items for contract %u", contractID );
-		return false;
-	}
-
-	// Request items
-	for( size_t i = 0; i < contract->m_requestItemTypeList.size(); i ++)
-	{
-		quantity = contract->m_requestItemTypeList.at( i ).m_quantity;
-		typeID = contract->m_requestItemTypeList.at( i ).m_typeID;
+		typeID = cur->second->m_typeID;
+		quantity = cur->second->m_quantity;
 
 		char buf[ 128 ];
 		snprintf( buf, 128, "(NULL, %u, %u, %u, false, NULL)", contractID, typeID, quantity );
 
-		if( i != 0 )
-            query += ',';
-        query += buf;
+		if( cur != contract->requestItems().begin() )
+			query += ',';
+		query += buf;
 	}
-
 	if( !sDatabase.RunQuery( err,
 		"INSERT"
-		" INTO contract_items(id, contractID, itemTypeID, quantity, inCrate, itemID)"
+		" INTO contracts_items(id, contractID, itemTypeID, quantity, inCrate, itemID)"
 		" VALUES %s", query.c_str() ))
 	{
-		_log(DATABASE__ERROR, "Failed to insert Contract items for contract %u", contractID );
+		_log( DATABASE__ERROR, "Failed to insert Contract Request Items for contract %u", contractID );
 		return false;
 	}
+
+	if( contract->type() == conTypeItemExchange )
+	{
+		std::map<uint32, ContractGetItemsRef>::iterator c, e;
+
+		c = contract->items().begin();
+		e = contract->items().end();
+		query = ' ';
+
+		for(; c != e; c++ )
+		{
+			itemID = c->second->m_itemID;
+			quantity = c->second->m_quantity;
+
+			char buf[ 128 ];
+			snprintf( buf, 128, "(NULL, %u, %u, %u, true, %u)", contractID, typeID, quantity, itemID );
+
+			if( c != contract->items().begin() )
+				query += ',';
+			query + buf;
+		}
+
+		if( !sDatabase.RunQuery( err,
+			"INSERT INTO contracts_items"
+			" (id, contractID, itemTypeID, quantity, inCrate, itemID)"
+			" VALUES %s", query.c_str() ))
+		{
+			_log(DATABASE__ERROR, "Failed to insert Contract Items for contract %u", contractID );
+			return false;
+		}
+	}
+
 	return true;
 }
 
 
-Contract* GetContractInfo( uint32 contractID )
+ContractData *ContractDB::GetContractInfo( uint32 contractID )
 {
-	Contract* contract;
+	// Contract* contract;
 	DBQueryResult res, items;
 	DBResultRow row, item;
 
@@ -318,12 +367,11 @@ Contract* GetContractInfo( uint32 contractID )
 		" issuerWalletKey,"
 		" issuerAllianceID,"
 		" acceptorWalletKey,"
-		" lastChange"
 		" FROM contract"
 		" WHERE contractID=%u", contractID ))
 	{
 		_log(DATABASE__ERROR, "Error loading contracts. Error: %s", res.error.c_str() );
-		return contract;
+		return NULL;
 	}
 
 	if( !res.GetRow( row ) )
@@ -333,7 +381,6 @@ Contract* GetContractInfo( uint32 contractID )
 
 	// Fill ContractData with the data from the DB
 	ContractData* cData = new ContractData(
-		row.GetUInt( 0 ),
 		row.GetUInt( 1 ),
 		row.GetUInt( 2 ),
 		row.GetUInt( 3 ),
@@ -364,12 +411,23 @@ Contract* GetContractInfo( uint32 contractID )
 		row.GetUInt( 28 ), // bool
 		row.GetUInt( 29 ),
 		row.GetUInt( 30 ),
-		row.GetUInt( 0 ),
 		row.GetUInt( 31 )
 		);
 		
+	return cData;
+
+	/*
+	if( !sDatabase.RunQuery( items,
+		"SELECT itemTypeID,"
+		" quantity"
+		" FORM contract_items"
+		" WHERE contractID = %u AND inCrate = false", row.GetUInt( 0 ) ))
+	{
+		_log(DATABASE__ERROR, "Error loading items for contract %u", row.GetUInt( 0 ) ));
+		return NULL;
+		}
 	// Assign m_contract a pointer to cData
-	contract->m_contract = *cData;
+	/*contract->m_contract = *cData;
 
 	if( !sDatabase.RunQuery(items,
 		"SELECT"
@@ -392,7 +450,7 @@ Contract* GetContractInfo( uint32 contractID )
 		contract->m_requestItemTypeList.at( n ).m_quantity = item.GetUInt( 1 );
 	}
 
-	return contract;
+	return contract;*/
 }
 
 
@@ -425,6 +483,126 @@ PyRep *ContractDB::GetPlayerItemsInStation( uint32 characterID, uint32 stationID
 }
 
 
+void ContractDB::DeleteContract( uint32 contractID )
+{
+	DBerror err;
+
+	sDatabase.RunQuery( err, "DELETE FROM contract WHERE contractID=%u", contractID );
+	sDatabase.RunQuery( err, "DELETE FROM contracts_items WHERE contractID=%u", contractID );
+
+}
+
+
+uint32 ContractDB::CreateContract( ContractRef contract )
+{
+	uint32 contractID = 0;
+	DBerror err;
+
+	if(!sDatabase.RunQueryLID(err, contractID,
+		"INSERT INTO"
+		" contract("
+		" contractID,"
+		" issuerID,"
+		" issuerCorpID,"
+		" type,"
+		" avail,"
+		" assigneeID,"
+		" expiretime,"
+		" duration,"
+		" startStationID,"
+		" endStationID,"
+		" startSolarSystemID,"
+		" endSolarSystemID,"
+		" startRegionID,"
+		" endRegionID,"
+		" price,"
+		" reward,"
+		" collateral,"
+		" title,"
+		" description,"
+		" forCorp,"
+		" status,"
+		" isAccepted,"
+		" acceptorID,"
+		" dateIssued,"
+		" dateExpired,"
+		" dateAccepted,"
+		" dateCompleted,"
+		" volume," // This should be the volume of all the items
+		" issuerWalletKey,"
+		" issuerAllianceID"
+		")VALUES("
+		"NULL, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %f, %f, ' ', ' ', %u, 0, false, NULL, " I64u ", " I64u ", NULL, " I64u ", %f, %d, %d)",
+		contract->issuerID(), contract->issuerCorpID(), contract->type(),
+		contract->avail(), contract->assigneeID(), contract->expiretime(), contract->duration(),
+		contract->startStationID(), contract->endStationID(), contract->startSolarSystemID(),
+		contract->endSolarSystemID(), contract->startRegionID(), contract->endRegionID(),
+		contract->price(), contract->reward(), contract->collateral(),
+		contract->forCorp(), contract->dateIssued(),
+		contract->dateExpired(), contract->dateExpired(), contract->volume(),
+		contract->issuerWalletKey(), contract->issuerAllianceID() ))
+	{
+		codelog(DATABASE__ERROR, "Error in query: %s", err.c_str() );
+		return false;
+	}
+
+	std::string query;
+	uint32 itemID = 0;
+	uint32 quantity = 0;
+	uint32 typeID = 0;
+
+	if( contract->type() == conTypeItemExchange )
+	{
+		std::map<uint32, ContractRequestItemRef>::iterator cur, end;
+		std::map<uint32, ContractRequestItemRef> requestItems = contract->requestItems();
+
+		cur = requestItems.begin();
+		end = requestItems.end();
+
+		for(; cur != end; cur++ )
+		{
+			typeID = cur->second->m_typeID;
+			quantity = cur->second->m_quantity;
+
+			char buf[ 128 ];
+			snprintf( buf, 128, "(NULL, %u, %u, %u, false, NULL)", contractID, typeID, quantity );
+
+			if( cur != requestItems.begin() )
+				query += ',';
+			query += buf;
+		}
+	}
+
+	std::map<uint32, ContractGetItemsRef>::iterator c, e;
+	std::map<uint32, ContractGetItemsRef> items = contract->items();
+
+	c = items.begin();
+	e = items.end();
+
+	for(; c != e; c++ )
+	{
+		itemID = c->second->m_itemID;
+		quantity = c->second->m_quantity;
+
+		char buf[ 128 ];
+		snprintf( buf, 128, "(NULL, %u, %u, %u, true, %u)", contractID, typeID, quantity, itemID );
+
+		if( c != items.begin() )
+			query += ',';
+		query += buf;
+	}
+
+	if( !sDatabase.RunQuery( err,
+		"INSERT INTO contracts_items"
+		" (id, contractID, itemTypeID, quantity, inCrate, itemID)"
+		" VALUES %s", query.c_str() ))
+	{
+		_log(DATABASE__ERROR, "Failed to insert Contract Items for contract %u", contractID );
+		return false;
+	}
+
+	return true;
+}
 
 
 

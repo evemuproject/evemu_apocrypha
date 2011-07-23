@@ -25,110 +25,81 @@
 
 #include "EVEServerPCH.h"
 
+/*
+ * std::map<uint32, ItemGroup *>::iterator res = m_groups.find(contractID);
+ */
 
-ContractManager::ContractManager()
+ContractFactory::ContractFactory(
+	ItemFactory &_factory)
+	: m_itemFactory(_factory)
 {
-	// ContractManager creation
+	std::map<uint32, ContractRef> contracts;
+	db().LoadContracts( contracts, m_itemFactory, *this );
+	m_contracts = contracts;
 }
 
-void ContractManager::Load( ItemFactory item_factory )
+ContractFactory::~ContractFactory()
 {
-	m_db.LoadContracts( m_contracts );
-	std::vector<uint32> items;
-	uint32 j = 0;
+	std::map<uint32, ContractRef>::const_iterator cur, end;
 
-	for( size_t i = 0; i < m_contracts.size(); i ++)
-	{
-		m_db.GetContractItems( m_contracts.at( i )->m_contract.m_contractID, items );
-		for( size_t n = 0; n < items.size(); n ++ )
-		{
-			m_contracts.at( i )->m_itemList.insert( m_contracts.at( i )->m_itemList.begin(), m_contracts.at( i )->m_itemList.end() );
-			j = m_contracts.at( i )->m_itemList.size();
-			m_contracts.at( i )->m_itemList.at( j ) = item_factory.GetItem( items.at( n ) );
-		}
-	}
-		
-}
-
-ContractManager::~ContractManager()
-{
-	// ContractManager destructor
-	sLog.Debug( "ContractManager", "Saving contract information to the DB" );
-	if( !m_db.PrepareDBForContractsSave() )return;
-	for( size_t i = 0; i < m_contracts.size(); i ++ )
-	{
-		m_db.SaveContract( m_contracts.at( i ) );
-	}
-
-	sLog.Debug( "ContractManager", "Destroying contract manager..." );
-	clear();
-	sLog.Debug( "ContractManager", "Contract manager destroyed" );
-}
-
-void ContractManager::clear()
-{
-	std::vector<Contract*>::const_iterator cur, end;
 	cur = m_contracts.begin();
 	end = m_contracts.end();
+
 	for(; cur != end; cur++)
-    {
-		delete &cur;
+	{
+		delete &cur->second;
 	}
+
 	m_contracts.clear();
 }
 
-bool ContractManager::UpdateContract( Contract* contractInfo )
+template<class _Ty>
+RefPtr<_Ty> ContractFactory::_GetContract( uint32 contractID )
 {
-	uint32 i = 0;
-	for( i = 0; i < m_contracts.size(); i ++ )
-	{
-		if( m_contracts.at( i )->m_contract.m_contractID == contractInfo->m_contract.m_contractID )
-		{
-			m_contracts.at( i ) = contractInfo;
-			return true;
-		}
-	}
-	return false;
-}
+	std::map<uint32, ContractRef>::iterator res = m_contracts.find( contractID );
 
-void ContractManager::AddContract( Contract* contractInfo )
-{
-	uint32 i = 0;
-	m_contracts.insert( m_contracts.begin(), m_contracts.begin(), m_contracts.end() );
-	i = m_contracts.size();
-	m_contracts.at( i ) = contractInfo;
-}
-
-bool ContractManager::GetContract( uint32 contractID, Contract* contract )
-{
-	uint32 i = 0;
-	for( i = 0; i < m_contracts.size(); i ++ )
+	if( res == m_contracts.end() )
 	{
-		if( m_contracts.at( i )->m_contract.m_contractID == contractID )
-		{
-			contract = m_contracts.at( i );
-			return true;
-		}
+		// Load the item
+		RefPtr<_Ty> contract = _Ty::Load( m_itemFactory, *this, contractID );
+		if( !contract ) return RefPtr<_Ty>();
+
+		// We keep the original ref.
+		res = m_contracts.insert( std::make_pair( contractID, contract ) ).first;
 	}
 
-	return false;
-
+	return RefPtr<_Ty>::StaticCast( res->second );
 }
 
-bool ContractManager::RemoveContract( uint32 contractID )
+ContractRef ContractFactory::GetContract( uint32 contractID )
 {
-	uint32 i = 0;
-	for( i = 0; i < m_contracts.size(); i ++)
-	{
-		if( m_contracts.at( i )->m_contract.m_contractID == contractID )
-		{
-			m_contracts.erase( m_contracts.begin() + i, m_contracts.begin() + i );
-			return true;
-		}
-	}
-
-	return false;
+	return _GetContract<Contract>( contractID );
 }
 
+
+void ContractFactory::DeleteContract( uint32 contractID )
+{
+	std::map<uint32, ContractRef>::iterator res = m_contracts.find( contractID );
+
+	if( res == m_contracts.end() ) sLog.Error( "Contract Factory", "Contract ID %u not found when requesting deletion!", contractID );
+	else m_contracts.erase( res );
+}
+
+uint32 ContractFactory::CreateContract( ContractRef contractInfo )
+{
+	uint32 contractID = db().CreateContract( contractInfo );
+
+	ContractRef contract  = ContractRef( new Contract( contractID, contractInfo->contractData(), contractInfo->requestItems(), contractInfo->items(), contractInfo->itemFactory(), contractInfo->contractFactory()  ) );
+	m_contracts.insert( std::make_pair( contractID, contract) ).first;
+
+	return contractID;
+}
+
+
+void ContractFactory::AddContract( ContractRef contract )
+{
+	uint32 contractID = contract->contractID();
+	m_contracts.insert( std::make_pair( contractID, contract ) ).first;
+}
 
 

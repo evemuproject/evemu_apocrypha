@@ -32,8 +32,19 @@ ContractRequestItem::ContractRequestItem(
 	uint32 _typeID,
 	uint32 _quantity
 	)
-	: m_typeID(_typeID),
+	: RefObject( 0 ),
+	m_typeID(_typeID),
 	m_quantity(_quantity)
+{
+}
+
+ContractGetItems::ContractGetItems(
+	uint32 _itemID,
+	uint32 _quantity
+	)
+	: RefObject( 0 ),
+	m_itemID( _itemID ),
+	m_quantity( _quantity )
 {
 }
 
@@ -41,7 +52,6 @@ ContractRequestItem::ContractRequestItem(
  * ContractData
  */
 ContractData::ContractData(
-		uint32 _contractID,
 		uint32 _issuerID,
 		uint32 _issuerCorpID, 
 		uint32 _type,
@@ -72,10 +82,9 @@ ContractData::ContractData(
 		bool _requiresAttention,
 		uint32 _allianceID,
 		uint32 _issuerWalletKey,
-		uint32 _crateID,
-		uint64 _lastChange
+		uint32 _crateID
 	)
-	: m_contractID(_contractID),
+	: 
   m_issuerID(_issuerID),
   m_issuerCorpID(_issuerCorpID),
   m_type(_type),
@@ -106,22 +115,79 @@ ContractData::ContractData(
   m_requiresAttention(_requiresAttention),
   m_allianceID(_allianceID),
   m_issuerWalletKey(_issuerWalletKey),
-  m_crateID(_crateID),
-  m_lastChange(_lastChange)
+  m_crateID(_crateID)
 {
 
 }
 
 Contract::Contract(
+		uint32 _contractID,
 		ContractData &_contract,
-		std::map<uint32, ContractRequestItem> _requestItemTypeList,
-		std::map<uint32, InventoryItemRef> _itemList
+		const std::map<uint32, ContractRequestItemRef> _requestItems,
+		const std::map<uint32, ContractGetItemsRef> _items,
+		ItemFactory &_itemFactory,
+		ContractFactory &_factory
 		)
-: m_contract( _contract ),
-  m_requestItemTypeList(_requestItemTypeList),
-  m_itemList(_itemList)
+: RefObject( 0 ),
+  m_contractID(_contractID),
+  m_contract( _contract ),
+  m_requestItems(_requestItems),
+  m_items(_items),
+  m_itemFactory(_itemFactory),
+  m_factory(_factory)
 {
 }
+
+Contract::~Contract()
+{
+
+}
+
+ContractRef Contract::Load( ItemFactory &item_factory, ContractFactory &contract_factory, uint32 contractID )
+{
+    return Contract::Load<Contract>( item_factory, contract_factory, contractID );
+}
+
+template<class _Ty>
+RefPtr<_Ty> Contract::_LoadContract( ItemFactory &item_factory, ContractFactory &contract_factory, uint32 contractID,
+        const std::map<uint32, ContractRequestItemRef> &contractRequestItems, const std::map<uint32, ContractGetItemsRef> &contractItems,
+		ContractData &data
+    )
+{
+    
+    return ContractRef( new Contract( contractID, data, contractRequestItems, contractItems, item_factory, contract_factory ) );
+}
+
+void Contract::Delete()
+{
+	// Return the items to the hangar
+	std::map<uint32, ContractGetItemsRef>::iterator cur, end;
+
+	cur = items().begin();
+	end = items().end();
+
+	for(; cur != end; cur++)
+	{
+		InventoryItemRef item = m_itemFactory.GetItem( cur->second->m_itemID );
+		item->Move( startStationID(), flagHangar, true );
+		item->ChangeOwner( issuerID(), true );
+	}
+
+	// take ourself out of the DB
+	m_factory.db().DeleteContract( contractID() );
+
+	// Delete ourselves from factory cache
+	m_factory.DeleteContract( contractID() );
+}
+
+bool Contract::_Load()
+{
+    // update inventory
+    m_factory.AddContract( ContractRef( this ) );
+
+    return true;
+}
+
 
 
 

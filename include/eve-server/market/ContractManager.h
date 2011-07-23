@@ -23,35 +23,33 @@
 	Author:		Almamu, Aknor Jaden, adapted from /include/eve-server/system/BubbleManager.h authored by Zhur
 */
 
-#ifndef __CONTRACTMANAGER_H_INCL__
-#define __CONTRACTMANAGER_H_INCL__
+#ifndef __CONTRACTFACTORY_H_INCL__
+#define __CONTRACTFACTORY_H_INCL__
 
 
 // The purpose of this object is to make a nice container for
 // Contracts issued by Characters and Corporations.
-class ContractManager {
+// Its designed like ItemFactory
+class ContractFactory {
 public:
-	ContractManager();
-	~ContractManager();
+	ContractFactory(
+		ItemFactory &_factory);
+	~ContractFactory();
 
-	void Load( ItemFactory item_factory );
-
-	//
-	bool UpdateContract( Contract* contractInfo );
-	//
-	void AddContract( Contract* contractInfo );
-    //
-    bool GetContract( uint32 contractID, Contract* contract);
-	//
-	bool RemoveContract( uint32 contractID );
-
-	void clear();
-
-	// container for active contract objects
-	std::vector<Contract*> m_contracts;	//we own these
+	ContractRef GetContract( uint32 contractID );
+	uint32 CreateContract( ContractRef contractInfo );
+	ContractDB& db() { return m_db; }
+	void DeleteContract( uint32 contractID );
+	void AddContract( ContractRef contract );
+	std::map<uint32, ContractRef> GetContractList( ) const { return m_contracts; }
 
 protected:
+	template<class _Ty> RefPtr<_Ty> _GetContract( uint32 contractID );
 	ContractDB m_db;
+
+	ItemFactory &m_itemFactory;
+	std::map<uint32, ContractRef> m_contracts;
+
 };
 
-#endif /* !__CONTRACTMANAGER__H__INCL__ */
+#endif /* !__CONTRACTFACTORY__H__INCL__ */

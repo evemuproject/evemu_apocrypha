@@ -42,15 +42,26 @@ typedef enum{
 	conStatusOutstanding = 0
 }contractStatus;
 
+typedef enum{
+	conTypeFreeform = 5,
+	conTypeLoan = 4,
+	conTypeCourier = 3,
+	conTypeAuction = 2,
+	conTypeItemExchange = 1,
+	conTypeNothing = 0
+}contractType;
+
 class ContractDB
 {
 public:
-	bool LoadContracts( std::vector<Contract*> &into );
-	bool SaveContract( Contract* contract );
-	bool GetContractItems( uint32 contractID, std::vector<uint32>& into );
-	Contract* GetContractInfo( uint32 contractID );
+	bool LoadContracts( std::map<uint32, ContractRef> &into, ItemFactory &item_factory, ContractFactory &contract_factory );
+	bool SaveContract( ContractRef contract );
+	bool GetContractItems( uint32 contractID, std::map<uint32, ContractGetItemsRef> &items, std::map<uint32, ContractRequestItemRef> &requestItems );
+	ContractData *GetContractInfo( uint32 contractID );
 	bool PrepareDBForContractsSave();
 	PyRep *GetPlayerItemsInStation( uint32 characterID, uint32 stationID );
+	void DeleteContract( uint32 contractID );
+	uint32 CreateContract( ContractRef contractInfo );
 protected:
 	
 };

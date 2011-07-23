@@ -481,7 +481,7 @@ PyResult ContractMgrService::Handle_CreateContract( PyCallArgs& call )
 		false,
 		0,
 		Win32TimeNow(),
-		Win32TimeNow() /*+ ( info.duration * Win32Time_Day )*/,
+		Win32TimeNow() + ( info.duration * Win32Time_Day ),
 		Win32TimeNow(),
 		Win32TimeNow(),
 		0,
@@ -591,22 +591,22 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	header->AddColumn( "volume", DBTYPE_R8 );
 	header->AddColumn( "issuerAllianceID", DBTYPE_I4 );
 	header->AddColumn( "issuerWalletKey", DBTYPE_I4 );
-	CRowSet *rowset = new CRowSet( &header );
+	header->AddColumn( "acceptorWalletKey", DBTYPE_I4 );
+	header->AddColumn( "crateID", DBTYPE_I4 );
 
 	PyList* fieldData = new PyList;
 	DBResultRow row;
 
 	ContractRef contract = m_contractManager->GetContract( arg.arg );
 	
-	PyPackedRow* into = rowset->NewRow();
+	PyPackedRow* into = new PyPackedRow( header );
 	fieldData->AddItemInt( contract->contractID() );
 	fieldData->AddItemInt( contract->issuerID() );
 	fieldData->AddItemInt( contract->issuerCorpID() );
 	fieldData->AddItemInt( contract->type() );
 	fieldData->AddItemInt( contract->avail() );
 	fieldData->AddItemInt( contract->assigneeID() );
-	fieldData->AddItemInt( contract->expiretime() );
-	fieldData->AddItemInt( contract->duration() );
+	fieldData->AddItemInt( 0 );
 	fieldData->AddItemInt( contract->startStationID() );
 	fieldData->AddItemInt( contract->endStationID() );
 	fieldData->AddItemInt( contract->startSolarSystemID() );
@@ -620,27 +620,34 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	fieldData->AddItemString( " " );
 	fieldData->AddItemInt( contract->forCorp() );
 	fieldData->AddItemInt( contract->status() );
-	fieldData->AddItemInt( contract->isAccepted() );
 	fieldData->AddItemInt( contract->acceptorID() );
 	fieldData->AddItemInt( contract->dateIssued() );
 	fieldData->AddItemInt( contract->dateExpired() );
 	fieldData->AddItemInt( contract->dateAccepted() );
 	fieldData->AddItemInt( contract->dateCompleted() );
-	fieldData->AddItemInt( contract->volume() );
+	fieldData->AddItemReal( contract->volume() );
+	fieldData->AddItemInt( contract->issuerAllianceID() );
+	fieldData->AddItemInt( contract->issuerWalletKey() );
+	fieldData->AddItemInt( 0 );
+	fieldData->AddItemInt( 0 );
 	into->SetField( contract->contractID(), fieldData );
+
 	fieldData = new PyList;
+	PyList* itemList = new PyList;
 
-	_contract->SetItemString( "contract",  rowset );
-
-	util_Rowset res;
-	res.lines = new PyList;
-	res.header.clear();
-	fieldData = new PyList;
-
-	res.header.push_back( "contractID" );
-	res.header.push_back( "itemTypeID" );
-	res.header.push_back( "quantity" );
-	res.header.push_back( "inCrate" );
+	DBRowDescriptor *itemHeader = new DBRowDescriptor();
+	itemHeader->AddColumn( "contractID", DBTYPE_I4 );
+	itemHeader->AddColumn( "itemID", DBTYPE_I4 );
+	itemHeader->AddColumn( "quantity", DBTYPE_I4 );
+	itemHeader->AddColumn( "itemTypeID", DBTYPE_I4 );
+	itemHeader->AddColumn( "inCrate", DBTYPE_BOOL );
+	itemHeader->AddColumn( "parentID", DBTYPE_I4 );
+	itemHeader->AddColumn( "productivityLevel", DBTYPE_I4 );
+	itemHeader->AddColumn( "materialLevel", DBTYPE_I4 );
+	itemHeader->AddColumn( "copy", DBTYPE_BOOL );
+	itemHeader->AddColumn( "licensedProductionRunsRemaining", DBTYPE_I4 );
+	itemHeader->AddColumn( "damage", DBTYPE_R8 );
+	itemHeader->AddColumn( "flagID", DBTYPE_I2 );
 
 	std::map<uint32, ContractGetItemsRef>::const_iterator cur, end;
 	std::map<uint32, ContractGetItemsRef> items = contract->items();
@@ -648,14 +655,44 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	cur = items.begin();
 	end = items.end();
 
+	PyPackedRow* data = new PyPackedRow( itemHeader );
+
 	for(; cur != end; cur++ )
 	{
-		fieldData->AddItemInt( arg.arg );
-		fieldData->AddItemInt( cur->second->m_itemID );
+		InventoryItemRef item = m_manager->item_factory.GetItem( cur->second->m_itemID );
+		fieldData->AddItemInt( contract->contractID() );
+		fieldData->AddItemInt( item->itemID() );
 		fieldData->AddItemInt( cur->second->m_quantity );
+		fieldData->AddItemInt( item->typeID() );
 		fieldData->AddItemInt( true );
-		res.lines->AddItem( fieldData );
+
+		if( item->categoryID() == EVEDB::invCategories::Blueprint )
+		{
+			BlueprintRef bp = m_manager->item_factory.GetBlueprint( item->itemID() );
+			fieldData->AddItemInt( bp->parentBlueprintTypeID() );
+			fieldData->AddItemInt( bp->productivityLevel() );
+			fieldData->AddItemInt( bp->materialLevel() );
+			fieldData->AddItemInt( bp->copy() );
+			fieldData->AddItemInt( bp->licensedProductionRunsRemaining() );
+			if( bp->HasAttribute( 3 ) ) fieldData->AddItemReal( bp->GetAttribute( 3 ).get_float() );
+			else fieldData->AddItemReal( 0.0 );
+			fieldData->AddItemInt( bp->flag() );
+		}else{
+			fieldData->AddItemInt( 0 );
+			fieldData->AddItemInt( 0 );
+			fieldData->AddItemInt( 0 );
+			fieldData->AddItemInt( 0 );
+			fieldData->AddItemInt( 0 );
+			if( item->HasAttribute( 3 ) ) fieldData->AddItemReal( item->GetAttribute( 3 ).get_float() );
+			else fieldData->AddItemReal( 0.0 );
+			fieldData->AddItemInt( 0 );
+		}
+
+		data->SetField( contract->contractID(), fieldData );
+		itemList->AddItem( data );
+
 		fieldData = new PyList;
+		data = new PyPackedRow( itemHeader );
 	}
 
 	std::map<uint32, ContractRequestItemRef>::const_iterator c, e;
@@ -666,14 +703,26 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	for(; c != e; c++ )
 	{
 		fieldData->AddItemInt( arg.arg );
-		fieldData->AddItemInt( c->second->m_typeID );
+		fieldData->AddItemInt( 0 );
 		fieldData->AddItemInt( c->second->m_quantity );
+		fieldData->AddItemInt( c->second->m_typeID );
 		fieldData->AddItemInt( false );
-		res.lines->AddItem( fieldData );
+		fieldData->AddItemInt( 0 );
+		fieldData->AddItemInt( 0 );
+		fieldData->AddItemInt( 0 );
+		fieldData->AddItemInt( 0 );
+		fieldData->AddItemInt( 0 );
+		fieldData->AddItemReal( 0.0 );
+		fieldData->AddItemInt( 0 );
+		data->SetField( contract->contractID(), fieldData );
+		itemList->AddItem( data );
 		fieldData = new PyList;
+		data = new PyPackedRow( itemHeader );
 	}
-	_contract->SetItemString( "items", res.Encode() );
+
+	_contract->SetItemString( "items", itemList );
 	_contract->SetItemString( "bids", new PyNone() );
+	_contract->SetItemString( "contract",  into );
 
 	return new PyObject(
 		new PyString( "util.KeyVal" ), _contract

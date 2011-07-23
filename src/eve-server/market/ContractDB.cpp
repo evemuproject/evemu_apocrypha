@@ -558,7 +558,7 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 			quantity = cur->second->m_quantity;
 
 			char buf[ 128 ];
-			snprintf( buf, 128, "(NULL, %u, %u, %u, false, NULL)", contractID, typeID, quantity );
+			snprintf( buf, 128, "(%u, %u, %u, false, 0)", contractID, typeID, quantity );
 
 			if( cur != requestItems.begin() )
 				query += ',';
@@ -578,7 +578,7 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 		quantity = c->second->m_quantity;
 
 		char buf[ 128 ];
-		snprintf( buf, 128, "(NULL, %u, %u, %u, true, %u)", contractID, typeID, quantity, itemID );
+		snprintf( buf, 128, "(%u, %u, %u, true, %u)", contractID, typeID, quantity, itemID );
 
 		if( c != items.begin() )
 			query += ',';
@@ -587,7 +587,7 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 
 	if( !sDatabase.RunQuery( err,
 		"INSERT INTO contracts_items"
-		" (id, contractID, itemTypeID, quantity, inCrate, itemID)"
+		" (contractID, itemTypeID, quantity, inCrate, itemID)"
 		" VALUES %s", query.c_str() ))
 	{
 		_log(DATABASE__ERROR, "Failed to insert Contract Items for contract %u", contractID );

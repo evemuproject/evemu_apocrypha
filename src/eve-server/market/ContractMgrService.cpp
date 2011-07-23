@@ -481,7 +481,7 @@ PyResult ContractMgrService::Handle_CreateContract( PyCallArgs& call )
 		false,
 		0,
 		Win32TimeNow(),
-		Win32TimeNow() + ( info.duration * Win32Time_Day ),
+		Win32TimeNow() /*+ ( info.duration * Win32Time_Day )*/,
 		Win32TimeNow(),
 		Win32TimeNow(),
 		0,

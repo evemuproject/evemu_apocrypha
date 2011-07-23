@@ -63,8 +63,7 @@ bool ContractDB::LoadContracts( std::map<uint32, ContractRef> &into, ItemFactory
 		" dateCompleted,"
 		" volume,"
 		" issuerWalletKey,"
-		" issuerAllianceID,"
-		" acceptorWalletKey,"
+		" issuerAllianceID"
 		" FROM contract" ))
 	{
 		_log(DATABASE__ERROR, "Error loading contracts. Error: %s", res.error.c_str() );
@@ -109,7 +108,7 @@ bool ContractDB::LoadContracts( std::map<uint32, ContractRef> &into, ItemFactory
 			row.GetUInt( 28 ), // bool
 			row.GetUInt( 29 ),
 			row.GetUInt( 30 ),
-			row.GetUInt( 31 )
+			contractID
 			);
 
 		std::map<uint32, ContractRequestItemRef> requestItem;
@@ -119,8 +118,8 @@ bool ContractDB::LoadContracts( std::map<uint32, ContractRef> &into, ItemFactory
 			"SELECT"
 			" itemTypeID,"
 			" quantity"
-			" FROM contract_items"
-			" WHERE contractID=%u AND get=1", contractID ))
+			" FROM contracts_items"
+			" WHERE contractID=%u AND inCrate=0", contractID ))
 		{
 			_log(DATABASE__ERROR, "Error loading items for contract %u", row.GetUInt( 0 ) );
 			return false; // Return the actual load state
@@ -128,18 +127,15 @@ bool ContractDB::LoadContracts( std::map<uint32, ContractRef> &into, ItemFactory
 			
 		while( itemRes.GetRow( item ) )
 		{
-			ContractRequestItemRef requestItemRef;
-			requestItemRef->m_typeID = item.GetUInt( 0 );
-			requestItemRef->m_quantity = item.GetUInt( 1 );
-			requestItem.insert( std::make_pair( requestItemRef->m_typeID, requestItemRef ) ).first;
+			requestItem.insert( std::make_pair( item.GetUInt( 0 ), ContractRequestItemRef( new ContractRequestItem( item.GetUInt( 0 ), item.GetUInt( 1 ) ) ) ) ).first;
 		}
 
 		if( !sDatabase.RunQuery(itemRes,
 			"SELECT"
 			" itemID,"
 			" quantity"
-			" FROM contract_items"
-			" WHERE contractID=%u AND get=1", contractID ))
+			" FROM contracts_items"
+			" WHERE contractID=%u AND inCrate=1", contractID ))
 		{
 			_log(DATABASE__ERROR, "Error loading items for contract %u", row.GetUInt( 0 ) );
 			return false; // Return the actual load state
@@ -147,14 +143,11 @@ bool ContractDB::LoadContracts( std::map<uint32, ContractRef> &into, ItemFactory
 			
 		while( itemRes.GetRow( item ) )
 		{
-			ContractGetItemsRef itemRef;
-			itemRef->m_itemID = item.GetUInt( 0 );
-			itemRef->m_quantity = item.GetUInt( 1 );
-			items.insert( std::make_pair( itemRef->m_itemID, itemRef ) ).first;
+			items.insert( std::make_pair( item.GetUInt( 0 ), ContractGetItemsRef( new ContractGetItems( item.GetUInt( 0 ), item.GetUInt( 1 ) ) ) ) ).first;
 
 		}
 
-		into.insert( std::make_pair( contractID, ContractRef( new Contract( contractID, *cData, requestItem, items, item_factory, contract_factory ) ) ) ).first;
+		into.insert( std::make_pair( contractID, ContractRef( new Contract( contractID, *cData, requestItem, items, item_factory, contract_factory ) ) ) ).second;
 	}
 
 	return true;
@@ -532,14 +525,14 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 		" issuerWalletKey,"
 		" issuerAllianceID"
 		")VALUES("
-		"NULL, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %f, %f, ' ', ' ', %u, 0, false, NULL, " I64u ", " I64u ", NULL, " I64u ", %f, %d, %d)",
+		"NULL, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %f, %f, ' ', ' ', %u, 0, false, 0, " I64u ", " I64u ", " I64u ", " I64u ", %f, %d, %d)",
 		contract->issuerID(), contract->issuerCorpID(), contract->type(),
 		contract->avail(), contract->assigneeID(), contract->expiretime(), contract->duration(),
 		contract->startStationID(), contract->endStationID(), contract->startSolarSystemID(),
 		contract->endSolarSystemID(), contract->startRegionID(), contract->endRegionID(),
 		contract->price(), contract->reward(), contract->collateral(),
 		contract->forCorp(), contract->dateIssued(),
-		contract->dateExpired(), contract->dateExpired(), contract->volume(),
+		contract->dateExpired(), contract->dateAccepted(), contract->dateCompleted(), contract->volume(),
 		contract->issuerWalletKey(), contract->issuerAllianceID() ))
 	{
 		codelog(DATABASE__ERROR, "Error in query: %s", err.c_str() );

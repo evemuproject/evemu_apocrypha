@@ -120,64 +120,6 @@ PyResult InventoryBound::Handle_ListStations( PyCallArgs& call )
 
 	ItemDB m_db;
 	return m_db.ListStations( call.client->GetCharacterID() );
-	/*PyTuple* res = new PyTuple( 2 );
-	PyTuple* sub = new PyTuple( 2 );
-	m_manager->BindObject( call.client, call.client->services().
-	std::string n_b_id = "N=" + m_manager->GetNodeID() +":";
-	PyString* node_bind_id = new PyString( n_b_id );
-	sub->SetItem( 0, node_bind_id );
-	sub->SetItem( 1, new PyInt( 1 ) );
-	PySubStream* subStream = new PySubStream( sub );
-	PySubStruct* subStruct = new PySubStruct( subStream );
-
-	DBRowDescriptor *header = new DBRowDescriptor();
-	header->AddColumn( "stationID", DBTYPE_I4 );
-	header->AddColumn( "itemCount", DBTYPE_I4 );
-	CRowSet *listStations_rowset = new CRowSet( &header );
-
-	// Get all the hangar items
-	std::vector<InventoryItemRef> into;
-	CharacterRef ch = call.client->GetChar();
-	uint32 inventoryID = call.client->GetChar()->FindByFlag( flagHangar, into );
-
-	// count the items
-	std::vector<InventoryItemRef>::const_iterator cur, end;
-	PyDict* count = new PyDict;
-
-	cur = into.begin();
-	end = into.end();
-
-	for(; cur != end; cur++ )
-	{
-		if( m_manager->item_factory.GetItem( cur->get()->locationID() )->categoryID() == EVEDB::invGroups::Station )
-		{
-			if( count->GetItem( new PyInt( cur->get()->locationID() ) )->IsInt() )
-			{
-				uint32 c = count->GetItem( new PyInt( cur->get()->locationID() ) )->AsInt()->value();
-				c += 1;
-				count->SetItem( new PyInt( cur->get()->locationID() ), new PyInt( c ) );
-			}
-		}
-	}
-
-	PyDict::const_iterator c, e;
-
-	c = count->begin();
-	e = count->end();
-
-	uint32 i = 0;
-	for(;c != e; c++ )
-	{
-		PyPackedRow* line = listStations_rowset->NewRow();
-		PyList* data = new PyList;
-		data->AddItemInt( c->first->AsInt()->value() );
-		data->AddItemInt( c->second->AsInt()->value() );
-		line->SetField( i, data );
-		i ++;
-	}
-	
-	res->SetItem( 1, listStations_rowset );
-    return new PyTuple( res );*/
 }
 
 PyResult InventoryBound::Handle_GetItem(PyCallArgs &call) {

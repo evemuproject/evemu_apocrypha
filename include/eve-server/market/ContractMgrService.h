@@ -40,6 +40,7 @@ public:
 	PyCallable_DECL_CALL(GetContractList)
 	PyCallable_DECL_CALL(CreateContract)
 	PyCallable_DECL_CALL(GetContract)
+	PyCallable_DECL_CALL(NumOutstandingContracts)
 private:
 	class Dispatcher;
 	Dispatcher *const m_dispatch;

@@ -138,9 +138,6 @@ class Contract
 {
 	// friend class InventoryItem;	// to let it construct us
 public:
-	typedef InventoryDB::QueuedSkill QueuedSkill;
-	typedef InventoryDB::SkillQueue SkillQueue;
-
 	Contract(
 		uint32 _contractID,
 		ContractData &_contract,

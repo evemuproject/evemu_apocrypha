@@ -44,6 +44,7 @@ ContractMgrService::ContractMgrService(PyServiceMgr *mgr, ContractFactory* contr
 	PyCallable_REG_CALL(ContractMgrService, CreateContract);
 	PyCallable_REG_CALL(ContractMgrService, GetContract);
 	PyCallable_REG_CALL(ContractMgrService, GetContractList);
+	PyCallable_REG_CALL(ContractMgrService, NumOutstandingContracts);
 }
 
 ContractMgrService::~ContractMgrService()
@@ -51,9 +52,29 @@ ContractMgrService::~ContractMgrService()
 	delete m_dispatch;
 }
 
+PyResult ContractMgrService::Handle_NumOutstandingContracts( PyCallArgs& call )
+{
+	uint32 numOutstandingContracts = 0;
+	std::map<uint32, ContractRef>::const_iterator cur, end;
+	std::map<uint32, ContractRef> contracts = m_contractManager->GetContractList();
+
+	cur = contracts.begin();
+	end = contracts.end();
+
+	for(; cur != end; cur++ )
+	{
+		ContractRef contract = cur->second;
+		if( contract->issuerID() == call.client->GetCharacterID() )
+		{
+			numOutstandingContracts += 1;
+		}
+	}
+
+	return new PyInt( numOutstandingContracts );
+}
+
 PyResult ContractMgrService::Handle_NumRequiringAttention( PyCallArgs& call )
 {
-    sLog.Debug( "ContractMgrService", "Called NumRequiringAttention stub." );
 	uint32 requiresAttentionCorp = 0;
 	uint32 requiresAttention = 0;
 
@@ -131,6 +152,7 @@ PyResult ContractMgrService::Handle_CollectMyPageInfo( PyCallArgs& call )
 
 		}
 	}
+
 	ret->SetItemString( "numOutstandingContractsNonCorp", new PyInt( numOutstandingContractsNonCorp ) );
 	ret->SetItemString( "numOutstandingContractsForCorp", new PyInt( numOutstandingContractsForCorp ) );
 	ret->SetItemString( "numOutstandingContracts", new PyInt( numOutstandingContractsNonCorp + numOutstandingContractsForCorp ) );
@@ -145,14 +167,23 @@ PyResult ContractMgrService::Handle_CollectMyPageInfo( PyCallArgs& call )
 	ret->SetItemString( "numInProgressCorp", new PyInt( numInProgressCorp ) );
 	
 	return new PyObject(
-		new PyString( "util.Rowset"), ret 
+		new PyString( "util.KeyVal" ), ret 
 		);
 }
 
 
 PyResult ContractMgrService::Handle_GetItemsInStation( PyCallArgs& call )
 {
-	return m_db.GetPlayerItemsInStation( call.client->GetCharacterID(), call.client->GetStationID() );
+	Call_TwoIntegerArgs arg;
+	uint32 stationID = 0;
+
+	if( !arg.Decode( &call.tuple ) )
+	{
+		codelog(SERVICE__ERROR, "%s: Bad arguments to GetItemsInStation", call.client->GetName());
+		stationID = call.client->GetStationID();
+	}else stationID = arg.arg1;
+
+	return m_db.GetPlayerItemsInStation( call.client->GetCharacterID(), stationID );
 }
 
 
@@ -428,6 +459,73 @@ PyResult ContractMgrService::Handle_CreateContract( PyCallArgs& call )
 	uint32 flag = 0;
 	bool forCorp = false;
 	double volume = 0;
+	uint32 maxCharContracts = 0;
+
+	if( call.byname.find( "forCorp" ) != call.byname.end() )
+	{
+		forCorp = call.byname.find( "forCorp" )->second->AsBool()->value();
+	}
+
+
+	// Let's see the players limit of contracts
+	CharacterRef ch = call.client->GetChar();
+	
+	if( forCorp )
+	{
+		if( ch->HasSkill( 25233 ) )
+		{
+			SkillRef skill = ch->GetSkill( 25233 );
+			uint32 skillLevel = skill->GetAttribute( 280 ).get_int();
+			maxCharContracts = ( 10 * skillLevel ) + 10;
+		}
+		else
+		{
+			maxCharContracts = 10;
+		}
+	}
+	else
+	{
+		if( ch->HasSkill( 25235 ) )
+		{
+			SkillRef skill = ch->GetSkill( 25235 );
+			uint32 skillLevel = skill->GetAttribute( 280 ).get_int();
+			maxCharContracts = ( 4 * skillLevel ) + 1;
+		}
+		else
+		{
+			maxCharContracts = 1;
+		}
+
+		uint32 numOutstandingContractsNonCorp = 0;
+		uint32 numOutstandingContractsForCorp = 0;
+		std::map<uint32, ContractRef>::const_iterator cur, end;
+		std::map<uint32, ContractRef> contracts = m_contractManager->GetContractList();
+		
+		cur = contracts.begin();
+		end = contracts.end();
+
+		for(; cur != end; cur++ )
+		{
+			ContractRef contract = cur->second;
+			if( contract->issuerID() == call.client->GetCharacterID() )
+			{
+				if( contract->forCorp() ) numOutstandingContractsForCorp += 1;
+				else numOutstandingContractsNonCorp += 1;
+			}
+		}
+
+		if( ( forCorp ) && ( numOutstandingContractsForCorp >= maxCharContracts ) )
+		{
+			call.client->SendInfoModalMsg( "Your Corporation Contracting skill level only allows you to create %d public contracts for your corp/alliance", maxCharContracts );
+			return new PyBool( false );
+		}
+
+		if( ( !forCorp ) && ( numOutstandingContractsNonCorp >= maxCharContracts ) )
+		{
+			call.client->SendInfoModalMsg( "Your Contracting skill level only allows you to create %d public contracts", maxCharContracts );
+			return new PyBool( false );
+		}
+	}
 
 	if( !info.Decode( &call.tuple ) )
 	{
@@ -448,11 +546,6 @@ PyResult ContractMgrService::Handle_CreateContract( PyCallArgs& call )
 	if( call.byname.find( "itemList" ) != call.byname.end() )
 	{
 		itemList = call.byname.find( "itemList" )->second->AsList();
-	}
-
-	if( call.byname.find( "forCorp" ) != call.byname.end() )
-	{
-		forCorp = call.byname.find( "forCorp" )->second->AsBool()->value();
 	}
 
 	if( info.endStationID == 0 )info.endStationID = info.startStationID;
@@ -561,10 +654,10 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 		return NULL;
 	}
 
-	// Manual creation of a CRowset, i hate doing this -.-"
+	// Manual creation of PyPackedRow
 	DBRowDescriptor *header = new DBRowDescriptor();
-	header->AddColumn( "contractID", DBTYPE_I4);
-	header->AddColumn( "issuerID", DBTYPE_I4);
+	header->AddColumn( "contractID", DBTYPE_I4 );
+	header->AddColumn( "issuerID", DBTYPE_I4 );
 	header->AddColumn( "issuerCorpID", DBTYPE_I4 );
 	header->AddColumn( "type", DBTYPE_UI1 );
 	header->AddColumn( "availability", DBTYPE_I4 );
@@ -595,59 +688,58 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	header->AddColumn( "crateID", DBTYPE_I4 );
 
 	PyList* fieldData = new PyList;
-	DBResultRow row;
 
 	ContractRef contract = m_contractManager->GetContract( arg.arg );
 	
 	PyPackedRow* into = new PyPackedRow( header );
-	fieldData->AddItemInt( contract->contractID() );
-	fieldData->AddItemInt( contract->issuerID() );
-	fieldData->AddItemInt( contract->issuerCorpID() );
-	fieldData->AddItemInt( contract->type() );
-	fieldData->AddItemInt( contract->avail() );
-	fieldData->AddItemInt( contract->assigneeID() );
-	fieldData->AddItemInt( 0 );
-	fieldData->AddItemInt( contract->startStationID() );
-	fieldData->AddItemInt( contract->endStationID() );
-	fieldData->AddItemInt( contract->startSolarSystemID() );
-	fieldData->AddItemInt( contract->endSolarSystemID() );
-	fieldData->AddItemInt( contract->startRegionID() );
-	fieldData->AddItemInt( contract->endRegionID() );
-	fieldData->AddItemInt( contract->price() );
-	fieldData->AddItemInt( contract->reward() );
-	fieldData->AddItemInt( contract->collateral() );
-	fieldData->AddItemString( " " );
-	fieldData->AddItemString( " " );
-	fieldData->AddItemInt( contract->forCorp() );
-	fieldData->AddItemInt( contract->status() );
-	fieldData->AddItemInt( contract->acceptorID() );
-	fieldData->AddItemInt( contract->dateIssued() );
-	fieldData->AddItemInt( contract->dateExpired() );
-	fieldData->AddItemInt( contract->dateAccepted() );
-	fieldData->AddItemInt( contract->dateCompleted() );
-	fieldData->AddItemReal( contract->volume() );
-	fieldData->AddItemInt( contract->issuerAllianceID() );
-	fieldData->AddItemInt( contract->issuerWalletKey() );
-	fieldData->AddItemInt( 0 );
-	fieldData->AddItemInt( 0 );
+	fieldData->AddItemInt(    contract->contractID() );
+	fieldData->AddItemInt(    contract->issuerID() );
+	fieldData->AddItemInt(    contract->issuerCorpID() );
+	fieldData->AddItemInt(    contract->type() );
+	fieldData->AddItemInt(    contract->avail() );
+	fieldData->AddItemInt(    contract->assigneeID() );
+	fieldData->AddItemInt(    0 );
+	fieldData->AddItemInt(    contract->startStationID() );
+	fieldData->AddItemInt(    contract->endStationID() );
+	fieldData->AddItemInt(    contract->startSolarSystemID() );
+	fieldData->AddItemInt(    contract->endSolarSystemID() );
+	fieldData->AddItemInt(    contract->startRegionID() );
+	fieldData->AddItemInt(    contract->endRegionID() );
+	fieldData->AddItemInt(    contract->price() );
+	fieldData->AddItemInt(    contract->reward() );
+	fieldData->AddItemInt(	  contract->collateral() );
+	fieldData->AddItemString( "title" );
+	fieldData->AddItemString( "description" );
+	fieldData->AddItemInt(    contract->forCorp() );
+	fieldData->AddItemInt(    contract->status() );
+	fieldData->AddItemInt(    contract->acceptorID() );
+	fieldData->AddItemInt(    contract->dateIssued() );
+	fieldData->AddItemInt(    contract->dateExpired() );
+	fieldData->AddItemInt(    contract->dateAccepted() );
+	fieldData->AddItemInt(    contract->dateCompleted() );
+	fieldData->AddItemReal(   contract->volume() );
+	fieldData->AddItemInt(    contract->issuerAllianceID() );
+	fieldData->AddItemInt(    contract->issuerWalletKey() );
+	fieldData->AddItemInt(    0 );
+	fieldData->AddItemInt(    0 );
 	into->SetField( contract->contractID(), fieldData );
 
 	fieldData = new PyList;
 	PyList* itemList = new PyList;
 
 	DBRowDescriptor *itemHeader = new DBRowDescriptor();
-	itemHeader->AddColumn( "contractID", DBTYPE_I4 );
-	itemHeader->AddColumn( "itemID", DBTYPE_I4 );
-	itemHeader->AddColumn( "quantity", DBTYPE_I4 );
-	itemHeader->AddColumn( "itemTypeID", DBTYPE_I4 );
-	itemHeader->AddColumn( "inCrate", DBTYPE_BOOL );
-	itemHeader->AddColumn( "parentID", DBTYPE_I4 );
-	itemHeader->AddColumn( "productivityLevel", DBTYPE_I4 );
-	itemHeader->AddColumn( "materialLevel", DBTYPE_I4 );
-	itemHeader->AddColumn( "copy", DBTYPE_BOOL );
-	itemHeader->AddColumn( "licensedProductionRunsRemaining", DBTYPE_I4 );
-	itemHeader->AddColumn( "damage", DBTYPE_R8 );
-	itemHeader->AddColumn( "flagID", DBTYPE_I2 );
+	itemHeader->AddColumn( "contractID",						DBTYPE_I4 );
+	itemHeader->AddColumn( "itemID",							DBTYPE_I4 );
+	itemHeader->AddColumn( "quantity",							DBTYPE_I4 );
+	itemHeader->AddColumn( "itemTypeID",						DBTYPE_I4 );
+	itemHeader->AddColumn( "inCrate",							DBTYPE_BOOL );
+	itemHeader->AddColumn( "parentID",							DBTYPE_I4 );
+	itemHeader->AddColumn( "productivityLevel",					DBTYPE_I4 );
+	itemHeader->AddColumn( "materialLevel",						DBTYPE_I4 );
+	itemHeader->AddColumn( "copy",								DBTYPE_BOOL );
+	itemHeader->AddColumn( "licensedProductionRunsRemaining",	DBTYPE_I4 );
+	itemHeader->AddColumn( "damage",							DBTYPE_R8 );
+	itemHeader->AddColumn( "flagID",							DBTYPE_I2 );
 
 	std::map<uint32, ContractGetItemsRef>::const_iterator cur, end;
 	std::map<uint32, ContractGetItemsRef> items = contract->items();
@@ -655,10 +747,10 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	cur = items.begin();
 	end = items.end();
 
-	PyPackedRow* data = new PyPackedRow( itemHeader );
-
 	for(; cur != end; cur++ )
 	{
+		PyPackedRow* data = new PyPackedRow( itemHeader );
+
 		InventoryItemRef item = m_manager->item_factory.GetItem( cur->second->m_itemID );
 		fieldData->AddItemInt( contract->contractID() );
 		fieldData->AddItemInt( item->itemID() );
@@ -674,59 +766,78 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 			fieldData->AddItemInt( bp->materialLevel() );
 			fieldData->AddItemInt( bp->copy() );
 			fieldData->AddItemInt( bp->licensedProductionRunsRemaining() );
-			if( bp->HasAttribute( 3 ) ) fieldData->AddItemReal( bp->GetAttribute( 3 ).get_float() );
-			else fieldData->AddItemReal( 0.0 );
+
+			if( bp->HasAttribute( 3 ) )
+				fieldData->AddItemReal( bp->GetAttribute( 3 ).get_float() );
+			else
+				fieldData->AddItemReal( 0 );
+
 			fieldData->AddItemInt( bp->flag() );
-		}else{
+		}
+		else
+		{
 			fieldData->AddItemInt( 0 );
 			fieldData->AddItemInt( 0 );
 			fieldData->AddItemInt( 0 );
 			fieldData->AddItemInt( 0 );
 			fieldData->AddItemInt( 0 );
-			if( item->HasAttribute( 3 ) ) fieldData->AddItemReal( item->GetAttribute( 3 ).get_float() );
-			else fieldData->AddItemReal( 0.0 );
+			if( item->HasAttribute( 3 ) )
+				fieldData->AddItemReal( item->GetAttribute( 3 ).get_float() );
+			else
+				fieldData->AddItemReal( 0 );
 			fieldData->AddItemInt( 0 );
 		}
 
 		data->SetField( contract->contractID(), fieldData );
 		itemList->AddItem( data );
-
 		fieldData = new PyList;
-		data = new PyPackedRow( itemHeader );
 	}
 
 	std::map<uint32, ContractRequestItemRef>::const_iterator c, e;
 	std::map<uint32, ContractRequestItemRef> requestItems = contract->requestItems();
+
 	c = requestItems.begin();
 	e = requestItems.end();
 
 	for(; c != e; c++ )
 	{
-		fieldData->AddItemInt( arg.arg );
-		fieldData->AddItemInt( 0 );
-		fieldData->AddItemInt( c->second->m_quantity );
-		fieldData->AddItemInt( c->second->m_typeID );
-		fieldData->AddItemInt( false );
-		fieldData->AddItemInt( 0 );
-		fieldData->AddItemInt( 0 );
-		fieldData->AddItemInt( 0 );
-		fieldData->AddItemInt( 0 );
-		fieldData->AddItemInt( 0 );
+		PyPackedRow* data = new PyPackedRow( itemHeader );
+		fieldData->AddItemInt(	arg.arg );
+		fieldData->AddItemInt(	0 );
+		fieldData->AddItemInt(	c->second->m_quantity );
+		fieldData->AddItemInt(	c->second->m_typeID );
+		fieldData->AddItemInt(	false );
+		fieldData->AddItemInt(	0 );
+		fieldData->AddItemInt(	0 );
+		fieldData->AddItemInt(	0 );
+		fieldData->AddItemInt(	0 );
+		fieldData->AddItemInt(	0 );
 		fieldData->AddItemReal( 0.0 );
-		fieldData->AddItemInt( 0 );
+		fieldData->AddItemInt(	0 );
+
 		data->SetField( contract->contractID(), fieldData );
 		itemList->AddItem( data );
 		fieldData = new PyList;
-		data = new PyPackedRow( itemHeader );
 	}
 
-	_contract->SetItemString( "items", itemList );
-	_contract->SetItemString( "bids", new PyNone() );
-	_contract->SetItemString( "contract",  into );
+	DBRowDescriptor *bidsHeader = new DBRowDescriptor();
+	bidsHeader->AddColumn( "bidID",					DBTYPE_I4 );
+	bidsHeader->AddColumn( "contractID",			DBTYPE_I4 );
+	bidsHeader->AddColumn( "issuerID",				DBTYPE_I4 );
+	bidsHeader->AddColumn( "quantity",				DBTYPE_I4 );
+	bidsHeader->AddColumn( "issuerCorpID",			DBTYPE_I4 );
+	bidsHeader->AddColumn( "issuerStationID",		DBTYPE_I4 );
+	bidsHeader->AddColumn( "issuerSolarSystemID",	DBTYPE_I4 );
+	bidsHeader->AddColumn( "issuerRegionID",		DBTYPE_I4 );
+	CRowSet *bids_rowset = new CRowSet( &bidsHeader );
 
-	return new PyObject(
-		new PyString( "util.KeyVal" ), _contract
-		);
+	_contract->SetItemString( "items", itemList );
+	_contract->SetItemString( "bids", bids_rowset );
+	// _contract->SetItemString( "contract",  into);
+
+	PyObject* res = new PyObject( new PyString( "util.KeyVal" ), _contract );
+
+	return res;
 }
 
 

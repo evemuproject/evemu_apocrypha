@@ -26,7 +26,53 @@
 
 #include "EVEServerPCH.h"
 
+PyRep *ItemDB::ListStations( uint32 characterID )
+{
+	DBQueryResult res;
 
+	if( !sDatabase.RunQuery( res,
+		"SELECT locationID AS stationID,"
+		" count( itemID ) AS itemCount"
+		" FROM entity"
+		" WHERE ownerID=%u"
+		" AND NOT locationID=%u"
+		" AND flag=4"
+		" GROUP BY locationID", characterID ))
+	{
+		_log(DATABASE__ERROR, "Cant find items for character %u in any station", characterID );
+		return NULL;
+	}
+
+	return DBResultToCRowset( res );
+}
+
+PyRep *ItemDB::ListStationItems( uint32 characterID, uint32 stationID )
+{
+	DBQueryResult res;
+
+	if( !sDatabase.RunQuery( res,
+		"SELECT itemID,"
+		" entity.typeID,"
+		" quantity,"
+		" locationID,"
+		" flag,"
+		" singleton,"
+		" contraband,"
+		" invGroups.categoryID,"
+		" invTypes.groupID"
+		" FROM entity"
+		" LEFT JOIN invTypes ON entity.typeID = invTypes.typeID"
+		" LEFT JOIN invGroups ON invTypes.groupID = invGroups.groupID"
+		" WHERE ownerID=%u"
+		" AND locationID=%u"
+		" AND flag=4", characterID, stationID ))
+	{
+		_log(DATABASE__ERROR, "Cant find items for character %u in station %u", characterID, stationID );
+		return NULL;
+	}
+
+	return DBResultToCRowset( res );
+}
 
 
 

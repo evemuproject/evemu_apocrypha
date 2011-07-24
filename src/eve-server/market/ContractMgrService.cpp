@@ -656,75 +656,73 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 
 	// Manual creation of PyPackedRow
 	DBRowDescriptor *header = new DBRowDescriptor();
-	header->AddColumn( "contractID", DBTYPE_I4 );
-	header->AddColumn( "issuerID", DBTYPE_I4 );
-	header->AddColumn( "issuerCorpID", DBTYPE_I4 );
-	header->AddColumn( "type", DBTYPE_UI1 );
-	header->AddColumn( "availability", DBTYPE_I4 );
-	header->AddColumn( "assigneeID", DBTYPE_I4 );
-	header->AddColumn( "numDays", DBTYPE_I4 );
-	header->AddColumn( "startStationID", DBTYPE_I4 );
-	header->AddColumn( "endStationID", DBTYPE_I4 );
-	header->AddColumn( "startSolarSystemID", DBTYPE_I4 );
-	header->AddColumn( "endSolarSystemID", DBTYPE_I4 );
-	header->AddColumn( "startRegionID", DBTYPE_I4 );
-	header->AddColumn( "endRegionID", DBTYPE_I4 );
-	header->AddColumn( "price", DBTYPE_CY );
-	header->AddColumn( "reward", DBTYPE_CY );
-	header->AddColumn( "collateral", DBTYPE_CY );
-	header->AddColumn( "title", DBTYPE_WSTR );
-	header->AddColumn( "description", DBTYPE_WSTR );
-	header->AddColumn( "forCorp", DBTYPE_BOOL );
-	header->AddColumn( "status", DBTYPE_UI1 );
-	header->AddColumn( "acceptorID", DBTYPE_I4 );
-	header->AddColumn( "dateIssued", DBTYPE_FILETIME );
-	header->AddColumn( "dateExpired", DBTYPE_FILETIME );
-	header->AddColumn( "dateAccepted", DBTYPE_FILETIME );
-	header->AddColumn( "dateCompleted", DBTYPE_FILETIME );
-	header->AddColumn( "volume", DBTYPE_R8 );
-	header->AddColumn( "issuerAllianceID", DBTYPE_I4 );
-	header->AddColumn( "issuerWalletKey", DBTYPE_I4 );
-	header->AddColumn( "acceptorWalletKey", DBTYPE_I4 );
-	header->AddColumn( "crateID", DBTYPE_I4 );
-
-	PyList* fieldData = new PyList;
+	header->AddColumn( "contractID",			DBTYPE_I4 );
+	header->AddColumn( "issuerID",				DBTYPE_I4 );
+	header->AddColumn( "issuerCorpID",			DBTYPE_I4 );
+	header->AddColumn( "type",					DBTYPE_UI1 );
+	header->AddColumn( "availability",			DBTYPE_I4 );
+	header->AddColumn( "assigneeID",			DBTYPE_I4 );
+	header->AddColumn( "numDays",				DBTYPE_I4 );
+	header->AddColumn( "startStationID",		DBTYPE_I4 );
+	header->AddColumn( "endStationID",			DBTYPE_I4 );
+	header->AddColumn( "startSolarSystemID",	DBTYPE_I4 );
+	header->AddColumn( "endSolarSystemID",		DBTYPE_I4 );
+	header->AddColumn( "startRegionID",			DBTYPE_I4 );
+	header->AddColumn( "endRegionID",			DBTYPE_I4 );
+	header->AddColumn( "price",					DBTYPE_CY );
+	header->AddColumn( "reward",				DBTYPE_CY );
+	header->AddColumn( "collateral",			DBTYPE_CY );
+	header->AddColumn( "title",					DBTYPE_WSTR );
+	header->AddColumn( "description",			DBTYPE_WSTR );
+	header->AddColumn( "forCorp",				DBTYPE_BOOL );
+	header->AddColumn( "status",				DBTYPE_UI1 );
+	header->AddColumn( "acceptorID",			DBTYPE_I4 );
+	header->AddColumn( "dateIssued",			DBTYPE_FILETIME );
+	header->AddColumn( "dateExpired",			DBTYPE_FILETIME );
+	header->AddColumn( "dateAccepted",			DBTYPE_FILETIME );
+	header->AddColumn( "dateCompleted",			DBTYPE_FILETIME );
+	header->AddColumn( "volume",				DBTYPE_R8 );
+	header->AddColumn( "issuerAllianceID",		DBTYPE_I4 );
+	header->AddColumn( "issuerWalletKey",		DBTYPE_I4 );
+	header->AddColumn( "acceptorWalletKey",		DBTYPE_I4 );
+	header->AddColumn( "crateID",				DBTYPE_I4 );
 
 	ContractRef contract = m_contractManager->GetContract( arg.arg );
 	
-	PyPackedRow* into = new PyPackedRow( header );
-	fieldData->AddItemInt(    contract->contractID() );
-	fieldData->AddItemInt(    contract->issuerID() );
-	fieldData->AddItemInt(    contract->issuerCorpID() );
-	fieldData->AddItemInt(    contract->type() );
-	fieldData->AddItemInt(    contract->avail() );
-	fieldData->AddItemInt(    contract->assigneeID() );
-	fieldData->AddItemInt(    0 );
-	fieldData->AddItemInt(    contract->startStationID() );
-	fieldData->AddItemInt(    contract->endStationID() );
-	fieldData->AddItemInt(    contract->startSolarSystemID() );
-	fieldData->AddItemInt(    contract->endSolarSystemID() );
-	fieldData->AddItemInt(    contract->startRegionID() );
-	fieldData->AddItemInt(    contract->endRegionID() );
-	fieldData->AddItemInt(    contract->price() );
-	fieldData->AddItemInt(    contract->reward() );
-	fieldData->AddItemInt(	  contract->collateral() );
-	fieldData->AddItemString( "title" );
-	fieldData->AddItemString( "description" );
-	fieldData->AddItemInt(    contract->forCorp() );
-	fieldData->AddItemInt(    contract->status() );
-	fieldData->AddItemInt(    contract->acceptorID() );
-	fieldData->AddItemInt(    contract->dateIssued() );
-	fieldData->AddItemInt(    contract->dateExpired() );
-	fieldData->AddItemInt(    contract->dateAccepted() );
-	fieldData->AddItemInt(    contract->dateCompleted() );
-	fieldData->AddItemReal(   contract->volume() );
-	fieldData->AddItemInt(    contract->issuerAllianceID() );
-	fieldData->AddItemInt(    contract->issuerWalletKey() );
-	fieldData->AddItemInt(    0 );
-	fieldData->AddItemInt(    0 );
-	into->SetField( contract->contractID(), fieldData );
+	uint32 n = 0;
 
-	fieldData = new PyList;
+	PyPackedRow* into = new PyPackedRow( header );
+	into->SetField( "contractID",			new PyInt(		contract->contractID() ) );
+	into->SetField( "issuerID",				new PyInt(		contract->issuerID() ) );
+	into->SetField( "issuerCorpID",			new PyInt(		contract->issuerCorpID() ) );
+	into->SetField( "type",					new PyInt(		contract->type() ) );
+	into->SetField( "availability",			new PyInt(		contract->avail() ) );
+	into->SetField( "assigneeID",			new PyInt(		contract->assigneeID() ) );
+	into->SetField( "numDays",				new PyInt(		0 ) );
+	into->SetField( "startStationID",		new PyInt(		contract->startStationID() ) );
+	into->SetField( "endStationID",			new PyInt(		contract->endStationID() ) );
+	into->SetField( "startSolarSystemID",   new PyInt(		contract->startSolarSystemID() ) );
+	into->SetField( "endSolarSystemID",		new PyInt(		contract->endSolarSystemID() ) );
+	into->SetField( "startRegionID",		new PyInt(		contract->startRegionID() ) );
+	into->SetField( "endRegionID",			new PyInt(		contract->endRegionID() ) );
+	into->SetField( "price",				new PyFloat(	contract->price() ) );
+	into->SetField( "reward",				new PyFloat(	contract->reward() ) );
+	into->SetField( "collateral",			new PyFloat(	contract->collateral() ) );
+	into->SetField( "title",				new PyString(	"title" ) );
+	into->SetField( "description",			new PyString(	"description" ) );
+	into->SetField( "forCorp",				new PyBool(		contract->forCorp() ) );
+	into->SetField( "status",				new PyInt(		contract->status() ) );
+	into->SetField( "acceptorID",			new PyInt(		contract->acceptorID() ) );
+	into->SetField( "dateIssued",			new PyLong(		contract->dateIssued() ) );
+	into->SetField( "dateExpired",			new PyLong(		contract->dateExpired() ) );
+	into->SetField( "dateAccepted",			new PyLong(		contract->dateAccepted() ) );
+	into->SetField( "dateCompleted",		new PyLong(		contract->dateCompleted() ) );
+	into->SetField( "volume",				new PyFloat(	contract->volume() ) );
+	into->SetField( "issuerAllianceID",		new PyInt(		contract->issuerAllianceID() ) );
+	into->SetField( "issuerWalletKey",		new PyInt(		contract->issuerWalletKey() ) );
+	into->SetField( "acceptorWalletKey",	new PyInt(		0 ) );
+	into->SetField( "crateID",				new PyInt(		0 ) );
+
 	PyList* itemList = new PyList;
 
 	DBRowDescriptor *itemHeader = new DBRowDescriptor();
@@ -736,7 +734,7 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	itemHeader->AddColumn( "parentID",							DBTYPE_I4 );
 	itemHeader->AddColumn( "productivityLevel",					DBTYPE_I4 );
 	itemHeader->AddColumn( "materialLevel",						DBTYPE_I4 );
-	itemHeader->AddColumn( "copy",								DBTYPE_BOOL );
+	itemHeader->AddColumn( "copy",								DBTYPE_I4 );
 	itemHeader->AddColumn( "licensedProductionRunsRemaining",	DBTYPE_I4 );
 	itemHeader->AddColumn( "damage",							DBTYPE_R8 );
 	itemHeader->AddColumn( "flagID",							DBTYPE_I2 );
@@ -752,45 +750,45 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 		PyPackedRow* data = new PyPackedRow( itemHeader );
 
 		InventoryItemRef item = m_manager->item_factory.GetItem( cur->second->m_itemID );
-		fieldData->AddItemInt( contract->contractID() );
-		fieldData->AddItemInt( item->itemID() );
-		fieldData->AddItemInt( cur->second->m_quantity );
-		fieldData->AddItemInt( item->typeID() );
-		fieldData->AddItemInt( true );
+		data->SetField( "contractID",							new PyInt(	contract->contractID() ) );
+		data->SetField( "itemID",								new PyInt(	item->itemID() ) );
+		data->SetField( "quantity",								new PyInt(	cur->second->m_quantity ) );
+		data->SetField( "itemTypeID",							new PyInt(	item->typeID() ) );
+		data->SetField( "inCrate",								new PyBool(	true ) );
 
 		if( item->categoryID() == EVEDB::invCategories::Blueprint )
 		{
 			BlueprintRef bp = m_manager->item_factory.GetBlueprint( item->itemID() );
-			fieldData->AddItemInt( bp->parentBlueprintTypeID() );
-			fieldData->AddItemInt( bp->productivityLevel() );
-			fieldData->AddItemInt( bp->materialLevel() );
-			fieldData->AddItemInt( bp->copy() );
-			fieldData->AddItemInt( bp->licensedProductionRunsRemaining() );
+			data->SetField( "parentID",							new PyInt( bp->parentBlueprintTypeID() ) );
+			data->SetField( "productivityLevel",				new PyInt( bp->productivityLevel() ) );
+			data->SetField( "materialLevel",					new PyInt( bp->materialLevel() ) );
+			data->SetField( "copy",								new PyInt( bp->copy() ) );
+			data->SetField( "licensedProductionRunsRemaining",	new PyInt( bp->licensedProductionRunsRemaining() ) );
 
 			if( bp->HasAttribute( 3 ) )
-				fieldData->AddItemReal( bp->GetAttribute( 3 ).get_float() );
+				data->SetField( "damage",						new PyFloat( bp->GetAttribute( 3 ).get_float() ) );
 			else
-				fieldData->AddItemReal( 0 );
+				data->SetField( "damage",						new PyFloat( 0.0 ) );
 
-			fieldData->AddItemInt( bp->flag() );
+			data->SetField( "flagID",							new PyInt( bp->flag() ) );
 		}
 		else
 		{
-			fieldData->AddItemInt( 0 );
-			fieldData->AddItemInt( 0 );
-			fieldData->AddItemInt( 0 );
-			fieldData->AddItemInt( 0 );
-			fieldData->AddItemInt( 0 );
+			data->SetField( "parentID",							new PyInt( 0 ) );
+			data->SetField( "productivityLevel",				new PyInt( 0 ) );
+			data->SetField( "materialLevel",					new PyInt( 0 ) );
+			data->SetField( "copy",								new PyInt( 0 ) );
+			data->SetField( "licensedProductionRunsRemaining",	new PyInt( 0 ) );
+
 			if( item->HasAttribute( 3 ) )
-				fieldData->AddItemReal( item->GetAttribute( 3 ).get_float() );
+				data->SetField( "damage",						new PyFloat( item->GetAttribute( 3 ).get_float() ) );
 			else
-				fieldData->AddItemReal( 0 );
-			fieldData->AddItemInt( 0 );
+				data->SetField( "damage",						new PyFloat( 0.0 ) );
+
+			data->SetField( "flagID",							new PyInt( item->flag() ) );
 		}
 
-		data->SetField( contract->contractID(), fieldData );
 		itemList->AddItem( data );
-		fieldData = new PyList;
 	}
 
 	std::map<uint32, ContractRequestItemRef>::const_iterator c, e;
@@ -802,22 +800,20 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	for(; c != e; c++ )
 	{
 		PyPackedRow* data = new PyPackedRow( itemHeader );
-		fieldData->AddItemInt(	arg.arg );
-		fieldData->AddItemInt(	0 );
-		fieldData->AddItemInt(	c->second->m_quantity );
-		fieldData->AddItemInt(	c->second->m_typeID );
-		fieldData->AddItemInt(	false );
-		fieldData->AddItemInt(	0 );
-		fieldData->AddItemInt(	0 );
-		fieldData->AddItemInt(	0 );
-		fieldData->AddItemInt(	0 );
-		fieldData->AddItemInt(	0 );
-		fieldData->AddItemReal( 0.0 );
-		fieldData->AddItemInt(	0 );
+		data->SetField( "contractID",						new PyInt(	arg.arg ) );
+		data->SetField(	"itemID",							new PyInt(	0 ) );
+		data->SetField(	"quantity",							new PyInt(	c->second->m_quantity ) );
+		data->SetField(	"itemTypeID",						new PyInt(	c->second->m_typeID ) );
+		data->SetField( "inCrate",							new PyBool( false ) );
+		data->SetField(	"parentID",							new PyInt(  0 ) );
+		data->SetField( "productivityLevel",				new PyInt(  0 ) );
+		data->SetField( "materialLevel",					new PyInt(  0 ) );
+		data->SetField( "copy",								new PyInt(	0 ) );
+		data->SetField( "licensedProductionRunsRemaining",	new PyInt(   0 ) );
+		data->SetField( "damage",							new PyFloat( 0.0 ) );
+		data->SetField( "flagID",							new PyInt(   0 ) );
 
-		data->SetField( contract->contractID(), fieldData );
 		itemList->AddItem( data );
-		fieldData = new PyList;
 	}
 
 	DBRowDescriptor *bidsHeader = new DBRowDescriptor();
@@ -831,9 +827,9 @@ PyResult ContractMgrService::Handle_GetContract( PyCallArgs& call )
 	bidsHeader->AddColumn( "issuerRegionID",		DBTYPE_I4 );
 	CRowSet *bids_rowset = new CRowSet( &bidsHeader );
 
-	_contract->SetItemString( "items", itemList );
-	_contract->SetItemString( "bids", bids_rowset );
-	// _contract->SetItemString( "contract",  into);
+	_contract->SetItemString( "items",		itemList );
+	_contract->SetItemString( "bids",		bids_rowset );
+	_contract->SetItemString( "contract",	into);
 
 	PyObject* res = new PyObject( new PyString( "util.KeyVal" ), _contract );
 

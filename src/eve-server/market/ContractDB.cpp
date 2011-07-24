@@ -62,6 +62,7 @@ bool ContractDB::LoadContracts( std::map<uint32, ContractRef> &into, ItemFactory
 		" dateAccepted,"
 		" dateCompleted,"
 		" volume,"
+		" requiresAttention,"
 		" issuerWalletKey,"
 		" issuerAllianceID"
 		" FROM contract" ))
@@ -247,9 +248,9 @@ bool ContractDB::SaveContract( ContractRef contract )
 		contract->startStationID(), contract->endStationID(), contract->startSolarSystemID(),
 		contract->endSolarSystemID(), contract->startRegionID(), contract->endRegionID(),
 		contract->price(), contract->reward(), contract->collateral(), contract->title(),
-		contract->description(),	contract->forCorp(), contract->dateIssued(),
+		contract->description(), contract->forCorp(), contract->dateIssued(),
 		contract->dateExpired(), contract->dateExpired(), contract->volume(),
-		contract->issuerWalletKey(),	contract->issuerAllianceID(), 0 ))
+		contract->issuerWalletKey(), contract->issuerAllianceID(), 0 ))
 	{
 		codelog(DATABASE__ERROR, "Error in query: %s", err.c_str() );
 		return false;
@@ -357,9 +358,9 @@ ContractData *ContractDB::GetContractInfo( uint32 contractID )
 		" dateAccepted,"
 		" dateCompleted,"
 		" volume,"
+		" requiresAttention,"
 		" issuerWalletKey,"
-		" issuerAllianceID,"
-		" acceptorWalletKey,"
+		" issuerAllianceID"
 		" FROM contract"
 		" WHERE contractID=%u", contractID ))
 	{
@@ -404,7 +405,7 @@ ContractData *ContractDB::GetContractInfo( uint32 contractID )
 		row.GetUInt( 28 ), // bool
 		row.GetUInt( 29 ),
 		row.GetUInt( 30 ),
-		row.GetUInt( 31 )
+		contractID
 		);
 		
 	return cData;
@@ -531,8 +532,8 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 		contract->startStationID(), contract->endStationID(), contract->startSolarSystemID(),
 		contract->endSolarSystemID(), contract->startRegionID(), contract->endRegionID(),
 		contract->price(), contract->reward(), contract->collateral(),
-		contract->forCorp(), contract->dateIssued(),
-		contract->dateExpired(), contract->dateAccepted(), contract->dateCompleted(), contract->volume(),
+		contract->forCorp(), contract->dateIssued(), contract->dateExpired(),
+		contract->dateAccepted(), contract->dateCompleted(), contract->volume(),
 		contract->issuerWalletKey(), contract->issuerAllianceID() ))
 	{
 		codelog(DATABASE__ERROR, "Error in query: %s", err.c_str() );
@@ -571,6 +572,8 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 
 	c = items.begin();
 	e = items.end();
+
+	typeID = 0;
 
 	for(; c != e; c++ )
 	{

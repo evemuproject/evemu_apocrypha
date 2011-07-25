@@ -123,12 +123,10 @@ int main( int argc, char* argv[] )
     }
 	//make the item factory
     ItemFactory item_factory( sEntityList );
-
-	// make the contract manager
-	ContractManager* contractManager = new ContractManager();
+	ContractFactory contract_factory( item_factory );
 
     //now, the service manager...
-    PyServiceMgr services( 888444, sEntityList, item_factory );
+    PyServiceMgr services( 888444, sEntityList, item_factory, contract_factory );
 
     //setup the command dispatcher
     CommandDispatcher command_dispatcher( services );
@@ -183,7 +181,7 @@ int main( int argc, char* argv[] )
     services.RegisterService(new PetitionerService(&services));
     services.RegisterService(new SlashService(&services, &command_dispatcher));
     services.RegisterService(new MarketProxyService(&services));
-    services.RegisterService(new ContractMgrService(&services));
+    services.RegisterService(new ContractMgrService(&services, &contract_factory));
     services.RegisterService(new ReprocessingService(&services));
     services.RegisterService(new FactoryService(&services));
     services.RegisterService(new RamProxyService(&services));
@@ -240,10 +238,6 @@ int main( int argc, char* argv[] )
         if( MAIN_LOOP_DELAY > etime )
             Sleep( MAIN_LOOP_DELAY - etime );
     }
-
-	sLog.Log("server shutdown", "Deleting contract manager" );
-	// contractManager->~ContractManager(); // Call the 
-	delete contractManager;
 
     sLog.Log("server shutdown", "Main loop stopped" );
 

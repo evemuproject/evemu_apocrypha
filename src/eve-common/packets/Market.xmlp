@@ -129,6 +129,90 @@
     </tupleInline>
   </elementDef>
 
+  <!-- This belongs to ContractMgrService -->
+  <elementDef name="Call_GetContractListForOwner">
+    <tupleInline>
+      <int name="characterID" />
+      <int name="status" none_marker="0" />
+      <int name="contractType" none_marker="0" />
+      <bool name="isAccepted" none_marker="false" />
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="Call_GetContractList" >
+    <tupleInline>
+      <int name="type" />
+      <string name="title" />
+      <int name="priceMin" />
+      <int name="priceMax" />
+      <int name="issuedByIDs" />
+      <int name="assigneeID" />
+      <int name="stationID" />
+      <int name="solarSystemID" />
+      <int name="regionID" />
+      <int name="itemTypeID" />
+      <int name="itemCategoryID" />
+      <int name="itemGroupID" />
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="Call_CreateContract">
+    <tupleInline>
+      <int name="type" default="0" none_marker="0" />
+      <int name="avail" default="0" none_marker="0" />
+      <int name="assigneeID" default="0" none_marker="0" />
+      <int name="expiretime" default="0" none_marker="0" />
+      <int name="duration" default="0" none_marker="0" />
+      <int name="startStationID" default="0" none_marker="0" />
+      <int name="endStationID" default="0" none_marker="0" />
+      <long name="price" default="0" none_marker="0" />
+      <long name="collateral" default="0" none_marker="0" />
+      <long name="reward" default="0" none_marker="0" />
+      <wstring name="title" none_marker="0" />
+      <string name="description" none_marker="0"/>
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="Call_DeleteContract">
+    <tupleInline>
+      <int name="contractID" />
+      <!-- Never should be null/none-->
+      <objectInline>
+        <!-- Not sure for what we need this info  -->
+        <stringInline value="util.KeyVal" />
+        <tupleInline>
+          <int name="type" default="0" none_marker="0" />
+          <int name="avail" default="0" none_marker="0" />
+          <int name="assigneeID" default="0" none_marker="0" />
+          <int name="expiretime" default="0" none_marker="0" />
+          <int name="duration" default="0" none_marker="0" />
+          <int name="startStationID" default="0" none_marker="0" />
+          <int name="endStationID" default="0" none_marker="0" />
+          <long name="price" default="0" none_marker="0" />
+          <long name="collateral" default="0" none_marker="0" />
+          <long name="reward" default="0" none_marker="0" />
+          <wstring name="title" />
+          <string name="description" />
+        </tupleInline>
+      </objectInline>
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="Call_AcceptContract">
+    <tupleInline>
+      <int name="contractID" default="0" none_marker="0" />
+      <bool name="unknown" none_marker="false" />
+      <!-- isAccepted status from the contract? -->
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="Call_CompleteContract">
+    <tupleInline>
+      <int name="contractID" default="0" none_marker="0" />
+      <int name="status" default="0" none_marker="0" />
+      <!-- contract status?-->
+    </tupleInline>
+  </elementDef>
 </elements>
 
 

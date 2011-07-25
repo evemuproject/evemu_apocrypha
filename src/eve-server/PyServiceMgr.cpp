@@ -27,8 +27,9 @@
 
 #include "EVEServerPCH.h"
 
-PyServiceMgr::PyServiceMgr( uint32 nodeID, EntityList& elist, ItemFactory& ifactory )
+PyServiceMgr::PyServiceMgr( uint32 nodeID, EntityList& elist, ItemFactory& ifactory, ContractFactory& cfactory )
 : item_factory( ifactory ),
+  contract_factory( cfactory ),
   entity_list( elist ),
   lsc_service( NULL ),
   cache_service( NULL ),

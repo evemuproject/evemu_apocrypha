@@ -32,70 +32,26 @@ ContractRequestItem::ContractRequestItem(
 	uint32 _typeID,
 	uint32 _quantity
 	)
-	: m_typeID(_typeID),
+	: RefObject( 0 ),
+	m_typeID(_typeID),
 	m_quantity(_quantity)
 {
 }
 
-/*
- * ContractItem
- */
-ContractItem::ContractItem(
-	ItemFactory &_factory,
+ContractGetItems::ContractGetItems(
 	uint32 _itemID,
-	const ItemType &_type,
-	const ItemData &_data
+	uint32 _quantity
 	)
-: InventoryItem(_factory, _itemID, _type, _data)
+	: RefObject( 0 ),
+	m_itemID( _itemID ),
+	m_quantity( _quantity )
 {
-}
-
-ContractItemRef ContractItem::Load(ItemFactory &factory, uint32 itemID)
-{
-	return InventoryItem::Load<ContractItem>( factory, itemID );
-}
-
-template<class _Ty>
-RefPtr<_Ty> ContractItem::_LoadContractItem(ItemFactory &factory, uint32 itemID,
-	// InventoryItem stuff:
-	const ItemType &type, const ItemData &data)
-{
-	return ContractItemRef( new ContractItem( factory, itemID, type, data ) );
-}
-
-ContractItemRef ContractItem::Spawn(ItemFactory &factory, ItemData &data)
-{
-	uint32 itemID = _Spawn( factory, data );
-	if( itemID == 0 )
-		return ContractItemRef();
-
-    ContractItemRef contractItemRef = ContractItem::Load( factory, itemID );
-
-    return contractItemRef;
-}
-
-uint32 ContractItem::_Spawn(ItemFactory &factory, ItemData &data)
-{
-	// check it's a contractItem
-	/*const ItemType *type = factory.GetType( data.typeID );
-	if( type == NULL )
-		return 0;*/
-
-	if( data.flag != 6 )
-	{
-		_log( ITEM__ERROR, "Trying to spawn %d as ContractItem.", data.flag );
-		return 0;
-	}
-
-	// spawn item, nothing else
-	return InventoryItem::_Spawn( factory, data );
 }
 
 /*
  * ContractData
  */
 ContractData::ContractData(
-		uint32 _contractID,
 		uint32 _issuerID,
 		uint32 _issuerCorpID, 
 		uint32 _type,
@@ -128,7 +84,7 @@ ContractData::ContractData(
 		uint32 _issuerWalletKey,
 		uint32 _crateID
 	)
-	: m_contractID(_contractID),
+	: 
   m_issuerID(_issuerID),
   m_issuerCorpID(_issuerCorpID),
   m_type(_type),
@@ -165,16 +121,73 @@ ContractData::ContractData(
 }
 
 Contract::Contract(
+		uint32 _contractID,
 		ContractData &_contract,
-		std::map<uint32, ContractRequestItem> _requestItemTypeList,
-		std::map<uint32, ContractItem> _itemList)
-: m_contract( _contract ),
-  m_requestItemTypeList(_requestItemTypeList),
-  m_itemList(_itemList)
+		const std::map<uint32, ContractRequestItemRef> _requestItems,
+		const std::map<uint32, ContractGetItemsRef> _items,
+		ItemFactory &_itemFactory,
+		ContractFactory &_factory
+		)
+: RefObject( 0 ),
+  m_contractID(_contractID),
+  m_contract( _contract ),
+  m_requestItems(_requestItems),
+  m_items(_items),
+  m_itemFactory(_itemFactory),
+  m_factory(_factory)
 {
-    // allow contracts to be only singletons
-    // assert( singleton() && quantity() == 1);
-	// the contract itself is not an item, so i think we dont need this
 }
+
+Contract::~Contract()
+{
+
+}
+
+ContractRef Contract::Load( ItemFactory &item_factory, ContractFactory &contract_factory, uint32 contractID )
+{
+    return Contract::Load<Contract>( item_factory, contract_factory, contractID );
+}
+
+template<class _Ty>
+RefPtr<_Ty> Contract::_LoadContract( ItemFactory &item_factory, ContractFactory &contract_factory, uint32 contractID,
+        const std::map<uint32, ContractRequestItemRef> &contractRequestItems, const std::map<uint32, ContractGetItemsRef> &contractItems,
+		ContractData &data
+    )
+{
+    
+    return ContractRef( new Contract( contractID, data, contractRequestItems, contractItems, item_factory, contract_factory ) );
+}
+
+void Contract::Delete()
+{
+	// Return the items to the hangar
+	std::map<uint32, ContractGetItemsRef>::iterator cur, end;
+
+	cur = items().begin();
+	end = items().end();
+
+	for(; cur != end; cur++)
+	{
+		InventoryItemRef item = m_itemFactory.GetItem( cur->second->m_itemID );
+		item->Move( startStationID(), flagHangar, true );
+		item->ChangeOwner( issuerID(), true );
+	}
+
+	// take ourself out of the DB
+	m_factory.db().DeleteContract( contractID() );
+
+	// Delete ourselves from factory cache
+	m_factory.DeleteContract( contractID() );
+}
+
+bool Contract::_Load()
+{
+    // update inventory
+    m_factory.AddContract( ContractRef( this ) );
+
+    return true;
+}
+
+
 
 

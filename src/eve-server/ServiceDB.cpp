@@ -440,17 +440,15 @@ void ServiceDB::ProcessIntChange(const char * key, uint32 oldValue, uint32 newVa
 
 //johnsus - characterOnline mod
 void ServiceDB::SetCharacterOnlineStatus(uint32 char_id, bool onoff_status) {
-    DBerror err;    
-	uint64 lastLogin = Win32TimeNow();
+    DBerror err;   
 
     _log(CLIENT__TRACE, "ChrStatus: Setting character %u %s.", char_id, onoff_status ? "Online" : "Offline");
 
     if(!sDatabase.RunQuery(err,
         "UPDATE character_"
-        " SET online = %d,"
-		" lastLogin = "I64u
+        " SET online = %d"
         " WHERE characterID = %u",
-        onoff_status, char_id, lastLogin))
+        onoff_status, char_id))
     {
         codelog(SERVICE__ERROR, "Error in query: %s", err.c_str());
     }

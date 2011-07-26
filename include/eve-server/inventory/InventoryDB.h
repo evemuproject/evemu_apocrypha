@@ -255,6 +255,31 @@ public:
 	 * @return True if save succeds, false if fails.
 	 */
 	bool SaveCertificates( uint32 characterID, const Certificates &from );
+
+	// Implants:
+	struct currentImplants {
+		uint32 itemID;
+	};
+	typedef std::vector<currentImplants> Implants;
+
+	/**
+	 * Loads certificates
+	 *
+	 * @param[in] characterID ID of character whose certificates should be loaded.
+	 * @param[in] into Certificates wich loaded data should be stored.
+	 * @return True if load succeeds, false if fails.
+	 */
+	bool LoadImplants( uint32 characterID, Implants &into );
+
+	/**
+	 * Saves Implants
+	 *
+	 * @param[in] characterID ID of the character whose Implants are saved.
+	 * @param[in] from Implants to save.
+	 * @return True if save succeds, false if fails.
+	 */
+	bool SaveImplants( uint32 characterID, const Implants &from );
+
 	/*
 	 * Celestial object stuff
 	 * (mapDenormalize)

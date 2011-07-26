@@ -419,6 +419,10 @@ bool Character::_Load()
 
 	if( !m_factory.db().LoadCertificates( itemID(), m_certificates ) )
 		return false;
+
+	if( !m_factory.db().LoadImplants( itemID(), m_implants ) )
+		return false;
+
     // Calculate total SP trained and store in internal variable:
     _CalculateTotalSPTrained();
 
@@ -697,6 +701,51 @@ void Character::ClearSkillQueue()
     m_skillQueue.clear();
 }
 
+void Character::PlugImplant( uint32 itemID )
+{
+	// Get itemID, change its location to characterID
+	// and change the flag to flagImplant
+	// So now its on character's brain
+	InventoryItemRef item = m_factory.GetItem( itemID );
+	item->MoveInto( *this, flagImplant );
+
+	EvilNumber num = 1;
+	item->SetAttribute( AttrIsOnline, num, true );
+	cImplants i;
+	i.itemID = itemID;
+	m_implants.push_back( i );
+}
+
+void Character::UnplugImplant( uint32 itemID )
+{
+	InventoryItemRef item = m_factory.GetItem( itemID );
+	item->Delete();
+	std::vector<cImplants>::iterator cur, end;
+
+	for(; cur != end; cur++ )
+	{
+		if( cur->itemID == itemID )
+			m_implants.erase( cur );
+	}
+}
+
+void Character::GetImplants( Implants &imp )
+{
+	imp = m_implants;
+}
+
+bool Character::HasImplant( uint32 implantTypeID )
+{
+	uint32 i = 0;
+	for( i = 0; i < m_implants.size(); i++ )
+	{
+		InventoryItemRef item = m_factory.GetItem( m_implants.at( i ).itemID );
+		if( item->typeID() == implantTypeID ) return true;
+	}
+	
+	return false;
+}
+
 void Character::UpdateSkillQueue()
 {
     Client *c = m_factory.entity_list.FindCharacter( itemID() );
@@ -872,6 +921,7 @@ PyObject *Character::CharGetInfo() {
     //find all the skills contained within ourself.
     FindByFlag( flagSkill, skills );
     FindByFlag( flagSkillInTraining, skills );
+	FindByFlag( flagImplant, skills );
 
     //encode an entry for each one.
     std::vector<InventoryItemRef>::iterator cur, end;
@@ -1011,6 +1061,7 @@ void Character::SaveCharacter()
         cur->get()->SaveAttributes();
         //cur->get()->mAttributeMap.Save();
 	SaveCertificates();
+	SaveImplants();
 }
 
 void Character::SaveSkillQueue() const {
@@ -1030,6 +1081,14 @@ void Character::SaveCertificates() const {
 		itemID(),
 		m_certificates
 	);
+}
+
+void Character::SaveImplants() const
+{
+	_log( ITEM__TRACE, "Saving Implants for character %u", itemID() );
+
+	m_factory.db().SaveImplants( itemID(), m_implants );
+
 }
 
 void Character::_CalculateTotalSPTrained()

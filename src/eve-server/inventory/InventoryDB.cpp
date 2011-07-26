@@ -1786,9 +1786,11 @@ bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
 	if( !sDatabase.RunQuery( res,
 		"SELECT"
 		" itemID"
-		" FROM chrimplants"
-		" WHERE characterID=%u",
-		characterID ))
+		" FROM entity"
+		" WHERE ownerID=%u"
+		" AND locationID=%u"
+		" AND flag=%u",
+		characterID, characterID, flagImplant ))
 	{
 		_log(DATABASE__ERROR, "Failed to query certificates of character %u: %s", characterID, res.error.c_str() );
 		return false;
@@ -1804,49 +1806,6 @@ bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
 
 	return true;
 
-}
-
-bool InventoryDB::SaveImplants( uint32 characterID, const Implants &from )
-{
-	DBerror err;
-
-	if( !sDatabase.RunQuery( err,
-		"DELETE"
-		" FROM chrimplants"
-		" WHERE characterID = %u",
-		characterID ))
-	{
-		_log(DATABASE__ERROR, "Failed to delete certificates of character %u: %s", characterID, err.c_str() );
-		return false;
-	}
-
-	if( from.empty( ) )return true;
-
-	std::string query;
-
-	for(size_t i = 0; i < from.size(); i++)
-	{
-		const currentImplants &im = from[ i ];
-
-		char buf[ 64 ];
-		snprintf( buf, 64, "(NULL, %u, %u)", characterID, im.itemID );
-		if( i != 0 )
-			query += ',';
-		query += buf;
-
-	}
-
-	if( !sDatabase.RunQuery( err,
-		"INSERT"
-		" INTO chrimplants (id, characterID, itemID)"
-		" VALUES %s",
-		query.c_str() ))
-	{
-		_log(DATABASE__ERROR, "Failed to insert certificates of character %u: %s", characterID, err.c_str() );
-		return false;
-	}
-
-	return true;
 }
 
 bool InventoryDB::SaveSkillQueue(uint32 characterID, const SkillQueue &queue) {

@@ -592,7 +592,6 @@ public:
 	void SaveCharacter();
 	void SaveSkillQueue() const;
 	void SaveCertificates() const;
-	void SaveImplants() const;
 
 protected:
 	Character(

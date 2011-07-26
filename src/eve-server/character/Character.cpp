@@ -711,6 +711,7 @@ void Character::PlugImplant( uint32 itemID )
 
 	EvilNumber num = 1;
 	item->SetAttribute( AttrIsOnline, num, true );
+	item->SaveAttributes();
 	cImplants i;
 	i.itemID = itemID;
 	m_implants.push_back( i );
@@ -719,13 +720,15 @@ void Character::PlugImplant( uint32 itemID )
 void Character::UnplugImplant( uint32 itemID )
 {
 	InventoryItemRef item = m_factory.GetItem( itemID );
-	item->Delete();
 	std::vector<cImplants>::iterator cur, end;
 
 	for(; cur != end; cur++ )
 	{
 		if( cur->itemID == itemID )
+		{
+			item->Delete();
 			m_implants.erase( cur );
+		}
 	}
 }
 
@@ -1061,7 +1064,6 @@ void Character::SaveCharacter()
         cur->get()->SaveAttributes();
         //cur->get()->mAttributeMap.Save();
 	SaveCertificates();
-	SaveImplants();
 }
 
 void Character::SaveSkillQueue() const {
@@ -1081,14 +1083,6 @@ void Character::SaveCertificates() const {
 		itemID(),
 		m_certificates
 	);
-}
-
-void Character::SaveImplants() const
-{
-	_log( ITEM__TRACE, "Saving Implants for character %u", itemID() );
-
-	m_factory.db().SaveImplants( itemID(), m_implants );
-
 }
 
 void Character::_CalculateTotalSPTrained()

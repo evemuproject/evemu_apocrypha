@@ -271,15 +271,6 @@ public:
 	 */
 	bool LoadImplants( uint32 characterID, Implants &into );
 
-	/**
-	 * Saves Implants
-	 *
-	 * @param[in] characterID ID of the character whose Implants are saved.
-	 * @param[in] from Implants to save.
-	 * @return True if save succeds, false if fails.
-	 */
-	bool SaveImplants( uint32 characterID, const Implants &from );
-
 	/*
 	 * Celestial object stuff
 	 * (mapDenormalize)

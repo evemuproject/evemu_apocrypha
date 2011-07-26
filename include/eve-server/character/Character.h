@@ -249,6 +249,7 @@ public:
 	uint64 startDateTime;
 	uint64 createDateTime;
 	uint64 corporationDateTime;
+
 };
 
 /**

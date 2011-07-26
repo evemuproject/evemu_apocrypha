@@ -40,6 +40,7 @@ CertificateMgrService::CertificateMgrService(PyServiceMgr *mgr)
     PyCallable_REG_CALL(CertificateMgrService, GrantCertificate)
     PyCallable_REG_CALL(CertificateMgrService, BatchCertificateGrant)
     PyCallable_REG_CALL(CertificateMgrService, BatchCertificateUpdate)
+	PyCallable_REG_CALL(CertificateMgrService, GetCertificatesByCharacter)
 }
 
 CertificateMgrService::~CertificateMgrService()
@@ -170,5 +171,40 @@ PyResult CertificateMgrService::Handle_BatchCertificateUpdate(PyCallArgs &call) 
     return(NULL);
 }
 
+
+PyResult CertificateMgrService::Handle_GetCertificatesByCharacter( PyCallArgs& call )
+{
+	Call_SingleIntegerArg arg;
+
+	if( !arg.Decode( &call.tuple ) )
+	{
+		_log( CLIENT__ERROR, "Bad arguments to function GetCertificatesByCharacter" );
+		return NULL;
+	}
+
+	CharacterRef ch = m_manager->item_factory.GetCharacter( arg.arg );
+	Character::Certificates crt;
+	ch->GetCertificates( crt );
+
+	util_Rowset rs;
+	rs.lines = new PyList;
+
+	rs.header.push_back( "certificateID" );
+	rs.header.push_back( "grantDate" );
+	rs.header.push_back( "visibilityFlags" );
+	
+	uint32 i = 0;
+	PyList* fieldData = new PyList;
+	for( i = 0; i < crt.size(); i++ )
+	{
+		fieldData->AddItemInt( crt.at( i ).certificateID );
+		fieldData->AddItemInt( crt.at( i ).grantDate );
+		fieldData->AddItemInt( crt.at( i ).visibilityFlags );
+		rs.lines->AddItem( fieldData );
+		fieldData = new PyList;
+	}
+
+    return rs.Encode();
+}
 
 

@@ -41,13 +41,14 @@ class EntityList;
 class ObjCacheService;
 class DBcore;
 class ItemFactory;
+class ContractFactory;
 
 class LSCService;
 
 class PyServiceMgr
 {
 public:
-	PyServiceMgr( uint32 nodeID, EntityList& elist, ItemFactory& ifactory );
+	PyServiceMgr( uint32 nodeID, EntityList& elist, ItemFactory& ifactory, ContractFactory& cfactory );
 	~PyServiceMgr();
 	
 	void Process();
@@ -66,8 +67,9 @@ public:
 	//this is a hack and needs to die:
 	ServiceDB &serviceDB() { return(m_svcDB); }
 
-	ItemFactory &item_factory;	//here for anybody to use. we do not own this.
-	EntityList &entity_list;	//here for anybody to use. we do not own this.
+	ItemFactory &item_factory;			// here for anybody to use. we do not own this.
+	ContractFactory &contract_factory;	// here for anybody to use. we do not own this.
+	EntityList &entity_list;			// here for anybody to use. we do not own this.
 	
 	//Area to access services by name. This isn't ideal, but it avoids casting.
 	//these may be NULL during service init, but should never be after that.

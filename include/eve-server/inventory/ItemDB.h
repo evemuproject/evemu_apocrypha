@@ -32,6 +32,8 @@ class ItemDB
 : public ServiceDB
 {
 public:
+	PyRep *ListStations( uint32 characterID );
+	PyRep *ListStationItems( uint32 characterID, uint32 stationID );
 protected:
 };
 

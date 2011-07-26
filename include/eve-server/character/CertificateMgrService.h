@@ -49,6 +49,7 @@ protected:
 	PyCallable_DECL_CALL(GrantCertificate)
 	PyCallable_DECL_CALL(BatchCertificateGrant)
 	PyCallable_DECL_CALL(BatchCertificateUpdate)
+	PyCallable_DECL_CALL(GetCertificatesByCharacter)
 
 };
 

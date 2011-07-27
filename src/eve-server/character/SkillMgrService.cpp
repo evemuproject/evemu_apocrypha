@@ -115,6 +115,7 @@ PyResult SkillMgrBound::Handle_GetSkillHistory( PyCallArgs& call )
 PyResult SkillMgrBound::Handle_CharAddImplant( PyCallArgs& call )
 {
     //takes itemid
+	// if you use Insider it takes String, not sure why
     Call_SingleIntegerArg args;
     if( !args.Decode( &call.tuple ) )
     {
@@ -124,12 +125,16 @@ PyResult SkillMgrBound::Handle_CharAddImplant( PyCallArgs& call )
 
     sLog.Debug( "SkillMgrBound", "Called CharAddImplant stub." );
 
-    return NULL;
+	// TODO: Check pre-requisites of implant
+	CharacterRef ch = call.client->GetChar();
+	ch->PlugImplant( args.arg );
+
+    return new PyBool( true );
 }
 
 PyResult SkillMgrBound::Handle_RemoveImplantFromCharacter( PyCallArgs& call )
 {
-    //takes itemid
+    // takes itemid
     Call_SingleIntegerArg args;
     if( !args.Decode( &call.tuple ) )
     {
@@ -138,8 +143,10 @@ PyResult SkillMgrBound::Handle_RemoveImplantFromCharacter( PyCallArgs& call )
     }
 
     sLog.Debug( "SkillMgrBound", "Called RemoveImplantFromCharacter stub." );
+	CharacterRef ch = call.client->GetChar();
+	ch->UnplugImplant( args.arg );
 
-    return NULL;
+    return new PyBool( true );
 }
 
 PyResult SkillMgrBound::Handle_GetSkillQueue(PyCallArgs &call) {

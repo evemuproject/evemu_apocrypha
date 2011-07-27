@@ -355,6 +355,8 @@ public:
 	typedef InventoryDB::SkillQueue SkillQueue;
 	typedef InventoryDB::currentCertificates cCertificates;
 	typedef InventoryDB::Certificates Certificates;
+	typedef InventoryDB::currentImplants cImplants;
+	typedef InventoryDB::Implants Implants;
 
 	/**
 	 * Loads character.
@@ -470,10 +472,35 @@ public:
 
 	/* GetCertificates( )
 	 * 
-	 * This will check if the player has a certificate
+	 * This will return a complete certificates structure
 	 * @author almamu
 	 */
 	void GetCertificates( Certificates &crt );
+
+	/* PlugImplant( uint32 itemID )
+	 * Plug implant into character's brain
+	 * @author almamu
+	 */
+
+	void PlugImplant( uint32 itemID );
+
+	/* UnplugImplant( uint32 itemID )
+	 * Delete implant from character's brain
+	 * @author almamu
+	 */
+	void UnplugImplant( uint32 itemID );
+
+	/* GetImplants( Implants &imp )
+	 * This will return a complete implants structure
+	 * @autho almamu
+	 */
+	void GetImplants( Implants &imp );
+
+	/* HasImplant( uint32 implantTypeID )
+	 * Checks if the character has an implant plugged
+	 * @author almamu
+	 */
+	bool HasImplant( uint32 implantTypeID );
 
 	/**
 
@@ -676,6 +703,7 @@ protected:
 	// Skill queue:
 	SkillQueue m_skillQueue;
 	Certificates m_certificates;
+	Implants m_implants;
     EvilNumber m_totalSPtrained;
 };
 

@@ -927,8 +927,7 @@ bool InventoryDB::GetCharacter(uint32 characterID, CharacterData &into) {
         "  chr.careerSpecialityID,"
         "  chr.startDateTime,"
         "  chr.createDateTime,"
-        "  chr.corporationDateTime,"
-		"  chr.lastLogin"
+        "  chr.corporationDateTime"
         " FROM character_ AS chr"
         " LEFT JOIN corporation AS crp USING (corporationID)"
         " WHERE characterID = %u",
@@ -1500,6 +1499,15 @@ bool InventoryDB::DeleteCharacter(uint32 characterID) {
 		_log(DATABASE__MESSAGE, "Ignoring error." );
 	}
 
+	// Implants
+	if( !sDatabase.RunQuery( err,
+		"DELETE FROM chrimplants"
+		" WHERE characterID=%u", characterID ))
+	{
+		_log(DATABASE__ERROR, "Failed to delete certificates of charater %u: %s", characterID, err.c_str() );
+		_log(DATABASE__MESSAGE, "Ignoring error." );
+	}
+
 	// clones
 	if( !sDatabase.RunQuery( err,
 		"DELETE FROM chrclones"
@@ -1769,6 +1777,35 @@ bool InventoryDB::SaveCertificates( uint32 characterID, const Certificates &from
 	}
 
 	return true;
+}
+
+bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
+{
+	DBQueryResult res;
+
+	if( !sDatabase.RunQuery( res,
+		"SELECT"
+		" itemID"
+		" FROM entity"
+		" WHERE ownerID=%u"
+		" AND locationID=%u"
+		" AND flag=%u",
+		characterID, characterID, flagImplant ))
+	{
+		_log(DATABASE__ERROR, "Failed to query certificates of character %u: %s", characterID, res.error.c_str() );
+		return false;
+	}
+
+	DBResultRow row;
+	while( res.GetRow( row ) )
+	{
+		currentImplants i;
+		i.itemID = row.GetUInt( 0 );
+		into.push_back( i );
+	}
+
+	return true;
+
 }
 
 bool InventoryDB::SaveSkillQueue(uint32 characterID, const SkillQueue &queue) {

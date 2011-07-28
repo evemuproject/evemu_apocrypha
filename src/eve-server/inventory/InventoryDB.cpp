@@ -1499,15 +1499,6 @@ bool InventoryDB::DeleteCharacter(uint32 characterID) {
 		_log(DATABASE__MESSAGE, "Ignoring error." );
 	}
 
-	// Implants
-	if( !sDatabase.RunQuery( err,
-		"DELETE FROM chrimplants"
-		" WHERE characterID=%u", characterID ))
-	{
-		_log(DATABASE__ERROR, "Failed to delete certificates of charater %u: %s", characterID, err.c_str() );
-		_log(DATABASE__MESSAGE, "Ignoring error." );
-	}
-
 	// clones
 	if( !sDatabase.RunQuery( err,
 		"DELETE FROM chrclones"
@@ -1779,7 +1770,7 @@ bool InventoryDB::SaveCertificates( uint32 characterID, const Certificates &from
 	return true;
 }
 
-bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
+bool InventoryDB::LoadImplantsAndBoosters( uint32 characterID, Implants &into, Boosters &bInto )
 {
 	DBQueryResult res;
 
@@ -1792,7 +1783,7 @@ bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
 		" AND flag=%u",
 		characterID, characterID, flagImplant ))
 	{
-		_log(DATABASE__ERROR, "Failed to query certificates of character %u: %s", characterID, res.error.c_str() );
+		_log(DATABASE__ERROR, "Failed to query Implants of character %u: %s", characterID, res.error.c_str() );
 		return false;
 	}
 
@@ -1802,6 +1793,25 @@ bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
 		currentImplants i;
 		i.itemID = row.GetUInt( 0 );
 		into.push_back( i );
+	}
+
+	if( !sDatabase.RunQuery( res,
+		"SELECT "
+		" itemID"
+		" FROM entity"
+		" WHERE ownerID=%u"
+		" AND locationID=%u"
+		" AND flag=%u", characterID, characterID, flagBooster))
+	{
+		_log(DATABASE__ERROR, "Failed to query Boosters of character %u: %s", characterID, res.error.c_str() );
+		return false;
+	}
+
+	while( res.GetRow( row ) )
+	{
+		currentBoosters i;
+		i.itemID = row.GetUInt( 0 );
+		bInto.push_back( i );
 	}
 
 	return true;

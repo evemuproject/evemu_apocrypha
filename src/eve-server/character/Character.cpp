@@ -420,7 +420,7 @@ bool Character::_Load()
 	if( !m_factory.db().LoadCertificates( itemID(), m_certificates ) )
 		return false;
 
-	if( !m_factory.db().LoadImplants( itemID(), m_implants ) )
+	if( !m_factory.db().LoadImplantsAndBoosters( itemID(), m_implants, m_boosters ) )
 		return false;
 
     // Calculate total SP trained and store in internal variable:
@@ -701,12 +701,56 @@ void Character::ClearSkillQueue()
     m_skillQueue.clear();
 }
 
+void Character::PlugBooster( uint32 itemID )
+{
+	// Get itemID, change its location to characterID
+	// and change the flag to flagBooster
+	// So now its on character's brain
+	InventoryItemRef item = m_factory.GetItem( itemID );
+
+	// First of all check if we already have this
+	std::vector<cBoosters>::iterator cur, end;
+	cur = m_boosters.begin();
+	end = m_boosters.end();
+
+	for(; cur != end; cur++ )
+	{
+		InventoryItemRef booster = m_factory.GetItem( cur->itemID );
+
+		// Ok, we already have this booster, return
+		if( item->typeID() == booster->typeID() )return;
+	}
+
+	item->MoveInto( *this, flagBooster );
+
+	EvilNumber num = 1;
+	item->SetAttribute( AttrIsOnline, num, true );
+	item->SaveAttributes();
+	cBoosters i;
+	i.itemID = itemID;
+	m_boosters.push_back( i );
+}
+
 void Character::PlugImplant( uint32 itemID )
 {
 	// Get itemID, change its location to characterID
 	// and change the flag to flagImplant
 	// So now its on character's brain
 	InventoryItemRef item = m_factory.GetItem( itemID );
+
+	// First of all check if we already have this
+	std::vector<cImplants>::iterator cur, end;
+	cur = m_implants.begin();
+	end = m_implants.end();
+
+	for(; cur != end; cur++ )
+	{
+		InventoryItemRef implant = m_factory.GetItem( cur->itemID );
+
+		// Ok, we already have this booster, return
+		if( item->typeID() == implant->typeID() ) return;
+	}
+
 	item->MoveInto( *this, flagImplant );
 
 	EvilNumber num = 1;
@@ -717,10 +761,31 @@ void Character::PlugImplant( uint32 itemID )
 	m_implants.push_back( i );
 }
 
+void Character::UnplugBooster( uint32 itemID )
+{
+	InventoryItemRef item = m_factory.GetItem( itemID );
+	std::vector<cBoosters>::iterator cur, end;
+
+	cur = m_boosters.begin();
+	end = m_boosters.end();
+
+	for(; cur != end; cur++ )
+	{
+		if( cur->itemID == itemID )
+		{
+			item->Delete();
+			m_boosters.erase( cur );
+		}
+	}
+}
+
 void Character::UnplugImplant( uint32 itemID )
 {
 	InventoryItemRef item = m_factory.GetItem( itemID );
 	std::vector<cImplants>::iterator cur, end;
+
+	cur = m_implants.begin();
+	end = m_implants.end();
 
 	for(; cur != end; cur++ )
 	{
@@ -732,9 +797,26 @@ void Character::UnplugImplant( uint32 itemID )
 	}
 }
 
+void Character::GetBoosters( Boosters &imp )
+{
+	imp = m_boosters;
+}
+
 void Character::GetImplants( Implants &imp )
 {
 	imp = m_implants;
+}
+
+bool Character::HasBooster( uint32 boosterTypeID )
+{
+	uint32 i = 0;
+	for( i = 0; i < m_boosters.size(); i++ )
+	{
+		InventoryItemRef item = m_factory.GetItem( m_boosters.at( i ).itemID );
+		if( item->typeID() == boosterTypeID ) return true;
+	}
+
+	return false;
 }
 
 bool Character::HasImplant( uint32 implantTypeID )
@@ -921,10 +1003,12 @@ PyObject *Character::CharGetInfo() {
 
     //now encode skills...
     std::vector<InventoryItemRef> skills;
-    //find all the skills contained within ourself.
+
+    // find all the skills located at our character's brain( AKA locationID = characterID )
     FindByFlag( flagSkill, skills );
     FindByFlag( flagSkillInTraining, skills );
 	FindByFlag( flagImplant, skills );
+	FindByFlag( flagBooster, skills );
 
     //encode an entry for each one.
     std::vector<InventoryItemRef>::iterator cur, end;

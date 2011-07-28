@@ -65,6 +65,8 @@ SkillMgrBound::SkillMgrBound(PyServiceMgr *mgr, CharacterDB &db)
     PyCallable_REG_CALL(SkillMgrBound, GetSkillQueue)
     PyCallable_REG_CALL(SkillMgrBound, SaveSkillQueue)
     PyCallable_REG_CALL(SkillMgrBound, AddToEndOfSkillQueue)
+	PyCallable_REG_CALL(SkillMgrBound, CharUseBooster)
+	PyCallable_REG_CALL(SkillMgrBound, GetCharacterAttributeModifiers)
 
     PyCallable_REG_CALL(SkillMgrBound, GetRespecInfo)
 }
@@ -130,6 +132,25 @@ PyResult SkillMgrBound::Handle_CharAddImplant( PyCallArgs& call )
 	ch->PlugImplant( args.arg );
 
     return new PyBool( true );
+}
+
+PyResult SkillMgrBound::Handle_CharUseBooster( PyCallArgs& call )
+{
+	// takes itemid
+	Call_SingleIntegerArg args;
+	if( !args.Decode( &call.tuple ) )
+	{
+		codelog( CLIENT__ERROR, "%s: failed to decode arguments", call.client->GetName() );
+		return NULL;
+	}
+
+	sLog.Debug( "SkillMgrBound", "Called CharUseBooster stub." );
+
+	// TODO: Check pre-requisites of booster
+	CharacterRef ch = call.client->GetChar();
+	ch->PlugBooster( args.arg );
+
+	return new PyBool( true );
 }
 
 PyResult SkillMgrBound::Handle_RemoveImplantFromCharacter( PyCallArgs& call )
@@ -264,3 +285,17 @@ PyResult SkillMgrBound::Handle_InjectSkillIntoBrain(PyCallArgs &call)
     // TODO: send notification that the skill(s) injection was successful.
     return NULL;
 }
+
+
+PyResult SkillMgrBound::Handle_GetCharacterAttributeModifiers( PyCallArgs& call )
+{
+	sLog.Debug( "SkillMgrBound", "Called GetCharacterAttributeModifiers stub." );
+
+	// How should we get the modifiers data ?
+	// How should we return that data to the client ?
+	CharacterRef ch = call.client->GetChar();
+
+	return NULL;
+}
+
+

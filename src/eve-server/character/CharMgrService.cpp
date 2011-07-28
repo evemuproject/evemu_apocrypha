@@ -36,6 +36,7 @@ CharMgrService::CharMgrService(PyServiceMgr *mgr)
 	PyCallable_REG_CALL(CharMgrService, GetPublicInfo)
 	PyCallable_REG_CALL(CharMgrService, GetPublicInfo3)
 	PyCallable_REG_CALL(CharMgrService, GetTopBounties)
+	PyCallable_REG_CALL(CharMgrService, AddToBounty)
 }
 
 CharMgrService::~CharMgrService() {
@@ -99,8 +100,31 @@ PyResult CharMgrService::Handle_GetTopBounties( PyCallArgs& call )
 	rs.header.push_back( "bounty" );
 	rs.header.push_back( "online" );
 
+	// When Bounties Window is openned
+
 	return rs.Encode();
 }
+
+
+PyResult CharMgrService::Handle_AddToBounty( PyCallArgs& call )
+{
+	sLog.Debug( "CharMgrService", "Called AddToBounty strub." );
+
+	util_Rowset rs;
+	rs.lines = new PyList;
+
+	rs.header.push_back( "characterID" );
+	rs.header.push_back( "ownerName" );
+	rs.header.push_back( "bounty" );
+	rs.header.push_back( "online" );
+
+	// When a bounty is added
+
+	return rs.Encode();
+}
+
+
+
 
 
 

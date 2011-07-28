@@ -32,8 +32,10 @@ PyRep *ItemDB::ListStations( uint32 characterID )
 
 	if( !sDatabase.RunQuery( res,
 		"SELECT locationID AS stationID,"
-		" count( itemID ) AS itemCount"
+		" count( itemID ) AS itemCount,"
+		" count( invblueprints.blueprintID ) AS blueprintCount"
 		" FROM entity"
+		" LEFT JOIN invblueprints ON invblueprints.blueprintID = itemID"
 		" WHERE ownerID=%u"
 		" AND NOT locationID=%u"
 		" AND flag=4"

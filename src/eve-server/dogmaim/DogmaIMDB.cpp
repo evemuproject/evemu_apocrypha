@@ -28,7 +28,25 @@
 
 
 
+PyRep *DogmaIMDB::GetCharacterBaseAttributes( uint32 ancestryID )
+{
+	DBQueryResult res;
 
+	if( !sDatabase.RunQuery(res,
+		"SELECT perception,"
+		" willpower,"
+		" charisma,"
+		" memory,"
+		" intelligence"
+		" FROM chrancestries"
+		" WHERE ancestryID = %u", ancestryID ))
+	{
+		_log(DATABASE__ERROR, "Cant find base attributes for ancestryID %u: %s", ancestryID, res.error.c_str() );
+		return NULL;
+	}
+
+	return DBResultToRowset( res );
+}
 
 
 

@@ -53,6 +53,7 @@ public:
 		PyCallable_REG_CALL(DogmaIMBound, RemoveTarget)
 		PyCallable_REG_CALL(DogmaIMBound, ClearTargets)
 		PyCallable_REG_CALL(DogmaIMBound, GetWeaponBankInfoForShip)
+		PyCallable_REG_CALL(DogmaIMBound, GetCharacterBaseAttributes)
 	}
 	virtual ~DogmaIMBound() {delete m_dispatch;}
 	virtual void Release() {
@@ -72,6 +73,7 @@ public:
 	PyCallable_DECL_CALL(RemoveTarget)
 	PyCallable_DECL_CALL(ClearTargets)
 	PyCallable_DECL_CALL(GetWeaponBankInfoForShip)
+	PyCallable_DECL_CALL(GetCharacterBaseAttributes)
 
 protected:
 	
@@ -106,6 +108,14 @@ PyResult DogmaIMService::Handle_GetAttributeTypes(PyCallArgs &call) {
     PyDecRef( str );
 
 	return result;
+}
+
+PyResult DogmaIMBound::Handle_GetCharacterBaseAttributes( PyCallArgs& call )
+{
+	// Not sure, but i think this takes no arguments
+	sLog.Debug( "DogmaIMBound", "Called GetCharacterBaseAttributes stub." );
+	
+	return m_db->GetCharacterBaseAttributes( call.client->GetChar()->ancestryID() );
 }
 
 PyResult DogmaIMBound::Handle_ShipGetInfo(PyCallArgs &call) {

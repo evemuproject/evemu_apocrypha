@@ -33,6 +33,7 @@ class DogmaIMDB
 : public ServiceDB
 {
 public:
+	PyRep *GetCharacterBaseAttributes( uint32 ancestryID );
 protected:
 };
 

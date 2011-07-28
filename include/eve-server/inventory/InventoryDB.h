@@ -262,6 +262,10 @@ public:
 	};
 	typedef std::vector<currentImplants> Implants;
 
+	struct currentBoosters {
+		uint32 itemID;
+	};
+	typedef std::vector<currentBoosters> Boosters;
 	/**
 	 * Loads certificates
 	 *
@@ -269,7 +273,7 @@ public:
 	 * @param[in] into Certificates wich loaded data should be stored.
 	 * @return True if load succeeds, false if fails.
 	 */
-	bool LoadImplants( uint32 characterID, Implants &into );
+	bool LoadImplantsAndBoosters( uint32 characterID, Implants &into, Boosters &bInto );
 
 	/*
 	 * Celestial object stuff

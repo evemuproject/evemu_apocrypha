@@ -709,7 +709,8 @@ void Character::PlugBooster( uint32 itemID )
 	InventoryItemRef item = m_factory.GetItem( itemID );
 
 	// First of all check if we already have this
-	std::vector<cBoosters>::iterator cur, end;
+	Boosters::iterator cur, end;
+
 	cur = m_boosters.begin();
 	end = m_boosters.end();
 
@@ -717,6 +718,7 @@ void Character::PlugBooster( uint32 itemID )
 	{
 		InventoryItemRef booster = m_factory.GetItem( cur->itemID );
 
+		if( booster == NULL ) return;
 		// Ok, we already have this booster, return
 		if( item->typeID() == booster->typeID() )return;
 	}
@@ -726,8 +728,12 @@ void Character::PlugBooster( uint32 itemID )
 	EvilNumber num = 1;
 	item->SetAttribute( AttrIsOnline, num, true );
 	item->SaveAttributes();
+
 	cBoosters i;
 	i.itemID = itemID;
+	i.plugDate = Win32TimeNow();
+	i.expiretime = item->GetAttribute( AttrBoosterDuration ).get_int();
+
 	m_boosters.push_back( i );
 }
 
@@ -739,13 +745,16 @@ void Character::PlugImplant( uint32 itemID )
 	InventoryItemRef item = m_factory.GetItem( itemID );
 
 	// First of all check if we already have this
-	std::vector<cImplants>::iterator cur, end;
+	Implants::iterator cur, end;
+
 	cur = m_implants.begin();
 	end = m_implants.end();
 
 	for(; cur != end; cur++ )
 	{
 		InventoryItemRef implant = m_factory.GetItem( cur->itemID );
+
+		if( implant == NULL ) return;
 
 		// Ok, we already have this booster, return
 		if( item->typeID() == implant->typeID() ) return;
@@ -756,45 +765,25 @@ void Character::PlugImplant( uint32 itemID )
 	EvilNumber num = 1;
 	item->SetAttribute( AttrIsOnline, num, true );
 	item->SaveAttributes();
+
 	cImplants i;
 	i.itemID = itemID;
+
 	m_implants.push_back( i );
 }
 
 void Character::UnplugBooster( uint32 itemID )
 {
 	InventoryItemRef item = m_factory.GetItem( itemID );
-	std::vector<cBoosters>::iterator cur, end;
-
-	cur = m_boosters.begin();
-	end = m_boosters.end();
-
-	for(; cur != end; cur++ )
-	{
-		if( cur->itemID == itemID )
-		{
-			item->Delete();
-			m_boosters.erase( cur );
-		}
-	}
+	item->Delete();
+	m_factory.db().LoadImplantsAndBoosters( itemID, m_implants, m_boosters );
 }
 
 void Character::UnplugImplant( uint32 itemID )
 {
 	InventoryItemRef item = m_factory.GetItem( itemID );
-	std::vector<cImplants>::iterator cur, end;
-
-	cur = m_implants.begin();
-	end = m_implants.end();
-
-	for(; cur != end; cur++ )
-	{
-		if( cur->itemID == itemID )
-		{
-			item->Delete();
-			m_implants.erase( cur );
-		}
-	}
+	item->Delete();
+	m_factory.db().LoadImplantsAndBoosters( itemID, m_implants, m_boosters );
 }
 
 void Character::GetBoosters( Boosters &imp )
@@ -817,6 +806,18 @@ bool Character::HasBooster( uint32 boosterTypeID )
 	}
 
 	return false;
+}
+
+bool Character::CheckBoosters()
+{
+	uint32 i = 0;
+	for( i = 0; i < m_boosters.size(); i ++ )
+	{
+		if( Win32TimeNow() > m_boosters.at( i ).plugDate + m_boosters.at( i ).expiretime )
+			UnplugBooster( m_boosters.at( i ).itemID );
+	}
+
+	return true;
 }
 
 bool Character::HasImplant( uint32 implantTypeID )
@@ -1004,6 +1005,9 @@ PyObject *Character::CharGetInfo() {
     //now encode skills...
     std::vector<InventoryItemRef> skills;
 
+	// Check that there are not expired boosters
+	CheckBoosters();
+
     // find all the skills located at our character's brain( AKA locationID = characterID )
     FindByFlag( flagSkill, skills );
     FindByFlag( flagSkillInTraining, skills );
@@ -1148,6 +1152,7 @@ void Character::SaveCharacter()
         cur->get()->SaveAttributes();
         //cur->get()->mAttributeMap.Save();
 	SaveCertificates();
+	SaveBoosters();
 }
 
 void Character::SaveSkillQueue() const {
@@ -1167,6 +1172,13 @@ void Character::SaveCertificates() const {
 		itemID(),
 		m_certificates
 	);
+}
+
+void Character::SaveBoosters() const
+{
+	_log( ITEM__TRACE, "Saving Boosters of character %u", itemID() );
+
+	m_factory.db().SaveBoosters( itemID(), m_boosters );
 }
 
 void Character::_CalculateTotalSPTrained()

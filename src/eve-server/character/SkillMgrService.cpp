@@ -291,11 +291,7 @@ PyResult SkillMgrBound::Handle_GetCharacterAttributeModifiers( PyCallArgs& call 
 {
 	sLog.Debug( "SkillMgrBound", "Called GetCharacterAttributeModifiers stub." );
 
-	// How should we get the modifiers data ?
-	// How should we return that data to the client ?
-	CharacterRef ch = call.client->GetChar();
-
-	return NULL;
+	return m_db.GetAttributeModifiers( call.client->GetChar()->ancestryID() );
 }
 
 

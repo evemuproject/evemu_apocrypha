@@ -264,16 +264,21 @@ public:
 
 	struct currentBoosters {
 		uint32 itemID;
+		uint64 plugDate;
+		uint64 expiretime;
 	};
 	typedef std::vector<currentBoosters> Boosters;
 	/**
-	 * Loads certificates
+	 * Loads implants and boosters
 	 *
-	 * @param[in] characterID ID of character whose certificates should be loaded.
-	 * @param[in] into Certificates wich loaded data should be stored.
+	 * @param[in] characterID ID of character whose implants/boosters should be loaded.
+	 * @param[in] into Implants wich loaded data should be stored.
+	 * @param[in] bInto Boosters wich loaded data should be stored.
 	 * @return True if load succeeds, false if fails.
 	 */
 	bool LoadImplantsAndBoosters( uint32 characterID, Implants &into, Boosters &bInto );
+
+	bool SaveBoosters( uint32 characterID, const Boosters &boosters);
 
 	/*
 	 * Celestial object stuff

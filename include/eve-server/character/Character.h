@@ -530,7 +530,13 @@ public:
 	 */
 	bool HasBooster( uint32 boosterTypeID );
 
-	/**
+	/* CheckBoosters()
+	 * Checks if any of the current player boosters have expired
+	 * @author almamu
+	 */
+	bool CheckBoosters();
+	 
+	 /**
 
 	/* AddSkillToSkillQueue()
 	 * 
@@ -620,6 +626,7 @@ public:
 	void SaveCharacter();
 	void SaveSkillQueue() const;
 	void SaveCertificates() const;
+	void SaveBoosters()	const;
 
 protected:
 	Character(

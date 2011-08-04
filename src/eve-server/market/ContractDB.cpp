@@ -561,10 +561,12 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 			char buf[ 128 ];
 			snprintf( buf, 128, "(%u, %u, %u, false, 0)", contractID, typeID, quantity );
 
-			if( cur != requestItems.begin() )
+			if( ( cur != requestItems.begin() ) && ( cur != requestItems.end() ) )
 				query += ',';
 			query += buf;
 		}
+
+		query += ',';
 	}
 
 	std::map<uint32, ContractGetItemsRef>::iterator c, e;
@@ -583,7 +585,7 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 		char buf[ 128 ];
 		snprintf( buf, 128, "(%u, %u, %u, true, %u)", contractID, typeID, quantity, itemID );
 
-		if( c != items.begin() )
+		if( ( c != items.begin() ) && ( c != items.end() ) )
 			query += ',';
 		query += buf;
 	}

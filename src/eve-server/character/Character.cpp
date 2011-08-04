@@ -420,7 +420,7 @@ bool Character::_Load()
 	if( !m_factory.db().LoadCertificates( itemID(), m_certificates ) )
 		return false;
 
-	if( !m_factory.db().LoadImplants( itemID(), m_implants ) )
+	if( !m_factory.db().LoadImplantsAndBoosters( itemID(), m_implants, m_boosters ) )
 		return false;
 
     // Calculate total SP trained and store in internal variable:
@@ -701,40 +701,123 @@ void Character::ClearSkillQueue()
     m_skillQueue.clear();
 }
 
+void Character::PlugBooster( uint32 itemID )
+{
+	// Get itemID, change its location to characterID
+	// and change the flag to flagBooster
+	// So now its on character's brain
+	InventoryItemRef item = m_factory.GetItem( itemID );
+
+	// First of all check if we already have this
+	Boosters::iterator cur, end;
+
+	cur = m_boosters.begin();
+	end = m_boosters.end();
+
+	for(; cur != end; cur++ )
+	{
+		InventoryItemRef booster = m_factory.GetItem( cur->itemID );
+
+		if( booster == NULL ) return;
+		// Ok, we already have this booster, return
+		if( item->typeID() == booster->typeID() )return;
+	}
+
+	item->MoveInto( *this, flagBooster );
+
+	EvilNumber num = 1;
+	item->SetAttribute( AttrIsOnline, num, true );
+	item->SaveAttributes();
+
+	cBoosters i;
+	i.itemID = itemID;
+	i.plugDate = Win32TimeNow();
+	i.expiretime = item->GetAttribute( AttrBoosterDuration ).get_int();
+
+	m_boosters.push_back( i );
+}
+
 void Character::PlugImplant( uint32 itemID )
 {
 	// Get itemID, change its location to characterID
 	// and change the flag to flagImplant
 	// So now its on character's brain
 	InventoryItemRef item = m_factory.GetItem( itemID );
+
+	// First of all check if we already have this
+	Implants::iterator cur, end;
+
+	cur = m_implants.begin();
+	end = m_implants.end();
+
+	for(; cur != end; cur++ )
+	{
+		InventoryItemRef implant = m_factory.GetItem( cur->itemID );
+
+		if( implant == NULL ) return;
+
+		// Ok, we already have this booster, return
+		if( item->typeID() == implant->typeID() ) return;
+	}
+
 	item->MoveInto( *this, flagImplant );
 
 	EvilNumber num = 1;
 	item->SetAttribute( AttrIsOnline, num, true );
 	item->SaveAttributes();
+
 	cImplants i;
 	i.itemID = itemID;
+
 	m_implants.push_back( i );
+}
+
+void Character::UnplugBooster( uint32 itemID )
+{
+	InventoryItemRef item = m_factory.GetItem( itemID );
+	item->Delete();
+	m_factory.db().LoadImplantsAndBoosters( itemID, m_implants, m_boosters );
 }
 
 void Character::UnplugImplant( uint32 itemID )
 {
 	InventoryItemRef item = m_factory.GetItem( itemID );
-	std::vector<cImplants>::iterator cur, end;
+	item->Delete();
+	m_factory.db().LoadImplantsAndBoosters( itemID, m_implants, m_boosters );
+}
 
-	for(; cur != end; cur++ )
-	{
-		if( cur->itemID == itemID )
-		{
-			item->Delete();
-			m_implants.erase( cur );
-		}
-	}
+void Character::GetBoosters( Boosters &imp )
+{
+	imp = m_boosters;
 }
 
 void Character::GetImplants( Implants &imp )
 {
 	imp = m_implants;
+}
+
+bool Character::HasBooster( uint32 boosterTypeID )
+{
+	uint32 i = 0;
+	for( i = 0; i < m_boosters.size(); i++ )
+	{
+		InventoryItemRef item = m_factory.GetItem( m_boosters.at( i ).itemID );
+		if( item->typeID() == boosterTypeID ) return true;
+	}
+
+	return false;
+}
+
+bool Character::CheckBoosters()
+{
+	uint32 i = 0;
+	for( i = 0; i < m_boosters.size(); i ++ )
+	{
+		if( Win32TimeNow() > m_boosters.at( i ).plugDate + m_boosters.at( i ).expiretime )
+			UnplugBooster( m_boosters.at( i ).itemID );
+	}
+
+	return true;
 }
 
 bool Character::HasImplant( uint32 implantTypeID )
@@ -921,10 +1004,15 @@ PyObject *Character::CharGetInfo() {
 
     //now encode skills...
     std::vector<InventoryItemRef> skills;
-    //find all the skills contained within ourself.
+
+	// Check that there are not expired boosters
+	CheckBoosters();
+
+    // find all the skills located at our character's brain( AKA locationID = characterID )
     FindByFlag( flagSkill, skills );
     FindByFlag( flagSkillInTraining, skills );
 	FindByFlag( flagImplant, skills );
+	FindByFlag( flagBooster, skills );
 
     //encode an entry for each one.
     std::vector<InventoryItemRef>::iterator cur, end;
@@ -1064,6 +1152,7 @@ void Character::SaveCharacter()
         cur->get()->SaveAttributes();
         //cur->get()->mAttributeMap.Save();
 	SaveCertificates();
+	SaveBoosters();
 }
 
 void Character::SaveSkillQueue() const {
@@ -1083,6 +1172,13 @@ void Character::SaveCertificates() const {
 		itemID(),
 		m_certificates
 	);
+}
+
+void Character::SaveBoosters() const
+{
+	_log( ITEM__TRACE, "Saving Boosters of character %u", itemID() );
+
+	m_factory.db().SaveBoosters( itemID(), m_boosters );
 }
 
 void Character::_CalculateTotalSPTrained()

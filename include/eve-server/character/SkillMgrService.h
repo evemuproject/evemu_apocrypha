@@ -72,6 +72,8 @@ public:
 	PyCallable_DECL_CALL(GetSkillHistory)
 	PyCallable_DECL_CALL(CharAddImplant)
 	PyCallable_DECL_CALL(RemoveImplantFromCharacter)
+	PyCallable_DECL_CALL(CharUseBooster)
+	PyCallable_DECL_CALL(GetCharacterAttributeModifiers)
 	
 	/**
 	 * GetSkillQueue

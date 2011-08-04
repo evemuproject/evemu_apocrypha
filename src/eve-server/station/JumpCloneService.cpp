@@ -118,7 +118,7 @@ PyResult JumpCloneBound::Handle_GetCloneState(PyCallArgs &call) {
 
 
 PyResult JumpCloneBound::Handle_GetPriceForClone(PyCallArgs &call) {
-	return new PyFloat( 1125000 ); // Harcoded
+	return new PyFloat( 100000 ); // Harcoded
 }
 
 PyResult JumpCloneBound::Handle_CloneJump( PyCallArgs &call )

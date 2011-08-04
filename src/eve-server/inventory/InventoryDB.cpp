@@ -1499,21 +1499,23 @@ bool InventoryDB::DeleteCharacter(uint32 characterID) {
 		_log(DATABASE__MESSAGE, "Ignoring error." );
 	}
 
-	// Implants
-	if( !sDatabase.RunQuery( err,
-		"DELETE FROM chrimplants"
-		" WHERE characterID=%u", characterID ))
-	{
-		_log(DATABASE__ERROR, "Failed to delete certificates of charater %u: %s", characterID, err.c_str() );
-		_log(DATABASE__MESSAGE, "Ignoring error." );
-	}
-
 	// clones
 	if( !sDatabase.RunQuery( err,
 		"DELETE FROM chrclones"
 		" WHERE characterID=%u", characterID))
 	{
 		_log(DATABASE__ERROR, "Failed to delete clones of character %u: %s", characterID, err.c_str() );
+		// ignore the error
+		_log(DATABASE__MESSAGE, "Ignoring error." );
+	}
+
+	// Boosters
+	if( !sDatabase.RunQuery( err,
+		"DELETE FROM chrboosters"
+		" WHERE ownerID=%u", characterID))
+	{
+		_log(DATABASE__ERROR, "Failed to delete boosters of character %u: %s", characterID, err.c_str() );
+
 		// ignore the error
 		_log(DATABASE__MESSAGE, "Ignoring error." );
 	}
@@ -1779,7 +1781,7 @@ bool InventoryDB::SaveCertificates( uint32 characterID, const Certificates &from
 	return true;
 }
 
-bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
+bool InventoryDB::LoadImplantsAndBoosters( uint32 characterID, Implants &into, Boosters &bInto )
 {
 	DBQueryResult res;
 
@@ -1792,7 +1794,7 @@ bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
 		" AND flag=%u",
 		characterID, characterID, flagImplant ))
 	{
-		_log(DATABASE__ERROR, "Failed to query certificates of character %u: %s", characterID, res.error.c_str() );
+		_log(DATABASE__ERROR, "Failed to query Implants of character %u: %s", characterID, res.error.c_str() );
 		return false;
 	}
 
@@ -1804,8 +1806,72 @@ bool InventoryDB::LoadImplants( uint32 characterID, Implants &into )
 		into.push_back( i );
 	}
 
+	if( !sDatabase.RunQuery( res,
+		"SELECT "
+		" itemID,"
+		" expiretime,"
+		" plugDate"
+		" FROM chrBoosters"
+		" WHERE ownerID=%u", characterID ))
+	{
+		_log(DATABASE__ERROR, "Failed to query Boosters of character %u: %s", characterID, res.error.c_str() );
+		return false;
+	}
+
+	while( res.GetRow( row ) )
+	{
+		currentBoosters i;
+		i.itemID = row.GetUInt( 0 );
+		i.expiretime = row.GetUInt64( 1 );
+		i.plugDate = row.GetUInt64( 2 );
+		bInto.push_back( i );
+	}
+
 	return true;
 
+}
+
+bool InventoryDB::SaveBoosters( uint32 characterID, const Boosters &boosters)
+{
+	DBerror err;
+
+	if( !sDatabase.RunQuery( err,
+		"DELETE"
+		" FROM chrBoosters"
+		" WHERE ownerID=%u", characterID ))
+	{
+		_log(DATABASE__ERROR, "Failed to delete boosters of character %u: %s", characterID, err.c_str() );
+		return false;
+	}
+
+	if( boosters.empty() )
+		return true;
+
+	std::string query;
+
+	for( size_t i = 0; i < boosters.size(); i ++ )
+	{
+        const currentBoosters &bs = boosters[ i ];
+
+        char buf[ 64 ];
+        snprintf( buf, 64, "(%u, " I64u ", " I64u ", %u)", bs.itemID, bs.expiretime, bs.plugDate, characterID  );
+
+        if( i != 0 )
+            query += ',';
+        query += buf;
+	}
+
+	if( !sDatabase.RunQuery( err,
+        "INSERT"
+        " INTO chrBoosters (itemID, expiretime, plugDate, ownerID)"
+        " VALUES %s",
+        query.c_str() ) )
+    {
+        _log(DATABASE__ERROR, "Failed to insert boosters of character %u: %s.", characterID, err.c_str());
+        return false;
+    }
+
+	return true;
 }
 
 bool InventoryDB::SaveSkillQueue(uint32 characterID, const SkillQueue &queue) {
@@ -1852,6 +1918,7 @@ bool InventoryDB::SaveSkillQueue(uint32 characterID, const SkillQueue &queue) {
 
     return true;
 }
+
 bool InventoryDB::GetTypeID(uint32 itemID, uint32 &typeID)
 {
 	DBQueryResult res;

@@ -354,6 +354,26 @@ bool CharacterDB::GetAttributesFromAncestry(uint32 ancestryID, uint8 &intelligen
 	return (true);
 }
 
+PyRep *CharacterDB::GetAttributeModifiers( uint32 ancestryID )
+{
+	DBQueryResult res;
+
+	if( !sDatabase.RunQuery( res,
+		"SELECT perception,"
+		" willpower,"
+		" charisma,"
+		" memory,"
+		" intelligence"
+		" FROM chrancestries"
+		" WHERE ancestryID=%u", ancestryID ))
+	{
+		codelog(DATABASE__ERROR, "Cant get attribute modifiers for ancestryID %u: %s", ancestryID, res.error.c_str() );
+		return NULL;
+	}
+
+	return DBResultToRowset( res );
+}
+
 /**
   * @todo Here should come a call to Corp??::CharacterJoinToCorp or what the heck... for now we only put it there
   */

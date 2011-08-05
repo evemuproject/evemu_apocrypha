@@ -226,6 +226,14 @@ public:
 	std::map<uint32, ContractRequestItemRef> requestItems() const{ return m_requestItems; }
 	std::map<uint32, ContractGetItemsRef> items() const { return m_items; }
 
+	PyPackedRow* GetContractRow();
+	void GetContractRow( PyPackedRow* into );
+
+	PyList* GetItemsList() const;
+	void GetItemRow( InventoryItemRef item, PyPackedRow* into ) const;
+	void GetRequestItemRow( ContractRequestItemRef item, PyPackedRow* into ) const;
+
+	CRowSet* GetBids() const;
 protected:
 	virtual ~Contract();
 

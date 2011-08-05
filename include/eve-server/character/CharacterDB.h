@@ -97,7 +97,7 @@ public:
 	 * @return True if operation succeeded, false if failed.
 	 */
 	bool GetAttributesFromAncestry(uint32 ancestryID, uint8 &intelligence, uint8 &charisma, uint8 &perception, uint8 &memory, uint8 &willpower);
-
+	PyRep *GetAttributeModifiers( uint32 ancestryID );
 	bool GetSkillsByRace(uint32 raceID, std::map<uint32, uint32> &into);
 	bool GetSkillsByCareer(uint32 careerID, std::map<uint32, uint32> &into);
 	bool GetSkillsByCareerSpeciality(uint32 careerSpecialityID, std::map<uint32, uint32> &into);

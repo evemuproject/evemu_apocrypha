@@ -266,7 +266,8 @@ SET( ship_INCLUDE
      "${TARGET_INCLUDE_DIR}/ship/Ship.h"
      "${TARGET_INCLUDE_DIR}/ship/ShipDB.h"
      "${TARGET_INCLUDE_DIR}/ship/ShipService.h"
-     "${TARGET_INCLUDE_DIR}/ship/TargetManager.h" )
+     "${TARGET_INCLUDE_DIR}/ship/TargetManager.h"
+	 "${TARGET_INCLUDE_DIR}/ship/InsuranceDB.h" )
 SET( ship_SOURCE
      "${TARGET_SOURCE_DIR}/ship/BeyonceService.cpp"
      "${TARGET_SOURCE_DIR}/ship/DestinyManager.cpp"
@@ -277,7 +278,8 @@ SET( ship_SOURCE
      "${TARGET_SOURCE_DIR}/ship/Ship.cpp"
      "${TARGET_SOURCE_DIR}/ship/ShipDB.cpp"
      "${TARGET_SOURCE_DIR}/ship/ShipService.cpp"
-     "${TARGET_SOURCE_DIR}/ship/TargetManager.cpp" )
+     "${TARGET_SOURCE_DIR}/ship/TargetManager.cpp"
+	 "${TARGET_SOURCE_DIR}/ship/InsuranceDB.cpp" )
 
 SET( spawn_INCLUDE
      "${TARGET_INCLUDE_DIR}/spawn/SpawnDB.h"

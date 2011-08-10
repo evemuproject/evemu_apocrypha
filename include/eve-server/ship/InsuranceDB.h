@@ -20,36 +20,24 @@
 	Place - Suite 330, Boston, MA 02111-1307, USA, or go to
 	http://www.gnu.org/copyleft/lesser.txt.
 	------------------------------------------------------------------------------------
-	Author:		Zhur
+	Author:		Almamu
 */
 
 
-#ifndef __INSURANCE_SERVICE_H_INCL__
-#define __INSURANCE_SERVICE_H_INCL__
+#ifndef __INSURANCEDB_H_INCL__
+#define __INSURANCEDB_H_INCL__
 
-#include "ship/InsuranceDB.h"
-#include "PyService.h"
+#include "ServiceDB.h"
 
-class InsuranceService
-: public PyService {
+class InsuranceDB
+: public ServiceDB
+{
 public:
-	InsuranceService(PyServiceMgr *mgr);
-	virtual ~InsuranceService();
-
-protected:
-	class Dispatcher;
-	Dispatcher *const m_dispatch;
-
-	InsuranceDB m_db;
-
-	PyCallable_DECL_CALL(GetContractForShip)
-	//PyCallable_DECL_CALL()
-
-	//overloaded in order to support bound objects:
-	virtual PyBoundObject *_CreateBoundObject(Client *c, const PyRep *bind_args);
+	bool GetStationItems( std::vector<int32> &into, uint32 stationID, uint32 characterID );
+	PyRep* GetContracts( const std::vector<int32> &ships, uint32 characterID );
+	bool InsureShip( uint32 shipID, uint32 ownerID, uint32 insureType );
+	bool UnInsureShip( uint32 shipID, uint32 characterID );
 };
-
-
 
 
 

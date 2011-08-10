@@ -184,6 +184,14 @@
     </tupleInline>
   </elementDef>
 
+  <!-- This doesnt belongs Character packets -->
+  <elementDef name="Call_InsureShip">
+    <tupleInline>
+      <int name="id1" />
+      <real name="id2" />
+      <int name="id3" />
+    </tupleInline>
+  </elementDef>
 </elements>
 
 

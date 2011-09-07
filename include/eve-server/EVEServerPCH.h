@@ -290,6 +290,7 @@
 #include "station/StationDB.h"
 #include "station/StationService.h"
 #include "station/StationSvcService.h"
+#include "station/RepairSvc.h"
 
 #include "trade/TradeService.h"
 #include "trade/TradeDB.h"

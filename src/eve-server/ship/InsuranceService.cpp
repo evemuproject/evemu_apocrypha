@@ -93,15 +93,25 @@ PyBoundObject* InsuranceService::_CreateBoundObject( Client* c, const PyRep* bin
 
 PyResult InsuranceService::Handle_GetContractForShip( PyCallArgs& call )
 {
-    sLog.Debug( "InsuranceService", "Called GetContractForShip stub." );
+    Call_SingleIntegerArg arg;
+	
+	if( !arg.Decode( call.tuple ) )
+	{
+		_log(SERVICE__ERROR, "Wrong parameters to GetContractForShip." );
+		return new PyNone;
+	}
 
-    return new PyNone;
+	uint32 characterID = call.client->GetCharacterID();
+	std::vector<int32> ships;
+	
+	ships.push_back( arg.arg );
+
+    return m_db.GetContracts( ships, characterID );
 }
 
 
 PyResult InsuranceBound::Handle_GetContracts( PyCallArgs& call )
 {
-	sLog.Debug( "InsuranceService", "Called GetContracts stub." );
 
 	uint32 stationID = call.client->GetStationID();
 	uint32 characterID = call.client->GetCharacterID();
@@ -127,19 +137,6 @@ PyResult InsuranceBound::Handle_GetContracts( PyCallArgs& call )
 	}
 
 	return m_db->GetContracts( ships, characterID );
-	/*
-	PyList* res = new PyList;
-	DBRowDescriptor* header = new DBRowDescriptor();
-	header->AddColumn( "ownerID", DBTYPE_I4 );
-	header->AddColumn( "shipID", DBTYPE_I4 );
-	header->AddColumn( "fraction", DBTYPE_I4 );
-	header->AddColumn( "startDate", DBTYPE_FILETIME );
-	header->AddColumn( "endDate", DBTYPE_FILETIME );
-
-	PyPackedRow* row = new PyPackedRow( header );
-	res->AddItem( row );
-
-	return res;*/
 }
 
 
@@ -153,15 +150,26 @@ PyResult InsuranceBound::Handle_InsureShip( PyCallArgs& call )
 		return new PyBool( false );
 	}
 
-	if( call.client->GetChar()->balance() > args.id2 )
-		call.client->GetChar()->AlterBalance( -args.id2 );
+	printf( "shipID: %d cost: %f type: %d\n", args.shipID, args.cost, args.type );
+
+	double baseprice = m_manager->item_factory.GetItem( args.shipID )->type().basePrice();
+	double fraction = args.cost * 100 / baseprice;
+
+	if( call.client->GetChar()->balance() > args.cost )
+		call.client->GetChar()->AlterBalance( -args.cost );
 	else
 	{
 		call.client->SendInfoModalMsg( "You don't have enough ISK to insure this ship with this insurance type." );
 		return new PyBool( false );
 	}
 
-	return new PyBool( m_db->InsureShip( args.id1, call.client->GetCharacterID(), args.id3 ) );
+	if( m_manager->item_factory.GetItem( args.shipID )->singleton() == false )
+	{
+		call.client->SendInfoModalMsg( "You can't insure repackaged ships..." );
+		return new PyBool( false );
+	}
+	
+	return new PyBool( m_db->InsureShip( args.shipID, call.client->GetCharacterID(), fraction / 5 ) );
 }
 
 

@@ -184,12 +184,18 @@
     </tupleInline>
   </elementDef>
 
-  <!-- This doesnt belongs Character packets -->
+  <!-- This doesnt belongs to Character packets -->
   <elementDef name="Call_InsureShip">
     <tupleInline>
-      <int name="id1" />
-      <real name="id2" />
-      <int name="id3" />
+      <int name="shipID" />
+      <real name="cost" />
+      <int name="type" />
+    </tupleInline>
+  </elementDef>
+
+  <elementDef name="Call_DamageModules">
+    <tupleInline>
+      <list name="data" />
     </tupleInline>
   </elementDef>
 </elements>

@@ -338,9 +338,9 @@ void Contract::GetItemRow( InventoryItemRef item, PyPackedRow* into ) const
 	}
 
 	if( item->HasAttribute( AttrDamage ) )
-		into->SetField( "damage",								new PyFloat( item->GetAttribute( AttrDamage ).get_float() ) );
+		into->SetField( "damage",								new PyInt( item->GetAttribute( AttrDamage ).get_int() ) );
 	else
-		into->SetField( "damage",								new PyFloat( 0.0 ) );
+		into->SetField( "damage",								new PyInt( 0 ) );
 
 	into->SetField( "flagID",									new PyInt( item->flag() ) );
 }
@@ -358,7 +358,7 @@ void Contract::GetRequestItemRow( ContractRequestItemRef item, PyPackedRow* into
 	into->SetField( "materialLevel",							new PyInt( 0 ) );
 	into->SetField( "copy",										new PyInt( 0 ) );
 	into->SetField( "licensedProductionRunsRemaining",			new PyInt( 0 ) );
-	into->SetField( "damage",									new PyFloat( 0.0 ) );
+	into->SetField( "damage",									new PyInt( 0 ) );
 	into->SetField( "flagID",									new PyInt( 0 ) );
 }
 

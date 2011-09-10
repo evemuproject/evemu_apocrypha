@@ -306,13 +306,16 @@ SET( station_INCLDUDE
      "${TARGET_INCLUDE_DIR}/station/Station.h"
      "${TARGET_INCLUDE_DIR}/station/StationDB.h"
      "${TARGET_INCLUDE_DIR}/station/StationService.h"
-     "${TARGET_INCLUDE_DIR}/station/StationSvcService.h" )
+     "${TARGET_INCLUDE_DIR}/station/StationSvcService.h"
+     "${TARGET_INCLUDE_DIR}/station/RepairSvc.h" )
+	 
 SET( station_SOURCE
      "${TARGET_SOURCE_DIR}/station/JumpCloneService.cpp"
      "${TARGET_SOURCE_DIR}/station/Station.cpp"
      "${TARGET_SOURCE_DIR}/station/StationDB.cpp"
      "${TARGET_SOURCE_DIR}/station/StationService.cpp"
-     "${TARGET_SOURCE_DIR}/station/StationSvcService.cpp" )
+     "${TARGET_SOURCE_DIR}/station/StationSvcService.cpp"
+     "${TARGET_SOURCE_DIR}/station/RepairSvc.cpp" )
 
 SET( system_INCLUDE
      "${TARGET_INCLUDE_DIR}/system/BookmarkDB.h"

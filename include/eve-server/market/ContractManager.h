@@ -23,11 +23,11 @@
 	Author:		Almamu, Aknor Jaden, adapted from /include/eve-server/system/BubbleManager.h authored by Zhur
 */
 
-#include "EVEServerPCH.h"
-
 #ifndef __CONTRACTFACTORY_H_INCL__
 #define __CONTRACTFACTORY_H_INCL__
 
+#include "market/ContractDB.h"
+#include "market/Contract.h"
 
 // The purpose of this object is to make a nice container for
 // Contracts issued by Characters and Corporations.

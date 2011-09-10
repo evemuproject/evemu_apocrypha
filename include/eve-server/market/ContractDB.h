@@ -27,8 +27,13 @@
 #define __CONTRACTDB_H_INCL__
 
 #include "ServiceDB.h"
+#include "market/ContractManager.h"
+#include "market/Contract.h"
 
 class PyRep;
+class ContractFactory;
+class ContractData;
+class Contract;
 
 typedef enum{
 	conStatusExpired = 8,

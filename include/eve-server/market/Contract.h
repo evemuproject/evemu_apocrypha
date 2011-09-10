@@ -23,10 +23,12 @@
 	Author:		Almamu, Aknor Jaden, adapted from /eve-server/src/character/Character.cpp authored by Zhur, Bloody.Rabbit
 */
 
-#include "EVEServerPCH.h"
-
 #ifndef __CONTRACT__H__INCL__
 #define __CONTRACT__H__INCL__
+
+#include "market/ContractManager.h"
+#include "market/ContractDB.h"
+#include "inventory/EVEAttributeMgr.h"
 
 /**
  * Class representing contract.

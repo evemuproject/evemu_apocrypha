@@ -89,7 +89,7 @@ uint32 ContractFactory::CreateContract( ContractRef contractInfo )
 {
 	uint32 contractID = db().CreateContract( contractInfo );
 
-	ContractRef contract  = ContractRef( new Contract( contractID, contractInfo->contractData(), contractInfo->requestItems(), contractInfo->items(), contractInfo->itemFactory(), contractInfo->contractFactory()  ) );
+	ContractRef contract  = ContractRef( new Contract( contractID, (ContractData &)contractInfo->contractData(), contractInfo->requestItems(), contractInfo->items(), contractInfo->itemFactory(), contractInfo->contractFactory()  ) );
 	m_contracts.insert( std::make_pair( contractID, contract) ).first;
 
 	return contractID;

@@ -247,8 +247,8 @@ bool ContractDB::SaveContract( ContractRef contract )
 		contract->avail(), contract->assigneeID(), contract->expiretime(), contract->duration(),
 		contract->startStationID(), contract->endStationID(), contract->startSolarSystemID(),
 		contract->endSolarSystemID(), contract->startRegionID(), contract->endRegionID(),
-		contract->price(), contract->reward(), contract->collateral(), contract->title(),
-		contract->description(), contract->forCorp(), contract->dateIssued(),
+		contract->price(), contract->reward(), contract->collateral(), contract->title().c_str(),
+		contract->description().c_str(), contract->forCorp(), contract->dateIssued(),
 		contract->dateExpired(), contract->dateExpired(), contract->volume(),
 		contract->issuerWalletKey(), contract->issuerAllianceID(), 0 ))
 	{

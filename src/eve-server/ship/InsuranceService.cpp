@@ -156,7 +156,7 @@ PyResult InsuranceBound::Handle_InsureShip( PyCallArgs& call )
 	double fraction = args.cost * 100 / baseprice;
 
 	if( call.client->GetChar()->balance() > args.cost )
-		call.client->GetChar()->AlterBalance( -args.cost );
+		call.client->AddBalance( -args.cost );
 	else
 	{
 		call.client->SendInfoModalMsg( "You don't have enough ISK to insure this ship with this insurance type." );

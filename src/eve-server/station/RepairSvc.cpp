@@ -224,7 +224,7 @@ PyResult RepairService::Handle_UnasembleItems( PyCallArgs& call )
 {
 	Call_UnasembleItems ships;
 
-	if( !ships.Decode( call.tuple ) )
+	if( !ships.Decode( &call.tuple ) )
 	{
 		_log(SERVICE__ERROR, "Cant decode args for UnasembleItems" );
 		return new PyNone;
@@ -263,40 +263,33 @@ PyResult RepairBound::Handle_DamageModules( PyCallArgs& call )
 {
 	Call_DamageModules args;
 
-	if( !args.Decode( call.tuple ) )
+	if( !args.Decode( &call.tuple ) )
 	{
 		_log(SERVICE__ERROR, "Cant decode args for UnasembleItems" );
 		return new PyNone;
 	}
 
 	/*
-	 * Apply damage percentage to the module/item
+	 * Apply the damage points sent by the client
 	 */
+
+	uint32 itemID = 0;
+	uint32 damage = 0;
 
 	for( size_t i = 0; i < args.data->size(); i ++ )
 	{
-		printf( "ItemID: %u Damage: %u", args.data->GetItem( 0 )->AsList()->GetItem( 0 )->AsInt()->value(),
-			args.data->GetItem( 0 )->AsList()->GetItem( 1 )->AsInt()->value() );
-		continue;
+		itemID = args.data->GetItem( 0 )->AsTuple()->GetItem( 0 )->AsInt()->value();
+		damage = args.data->GetItem( 0 )->AsTuple()->GetItem( 1 )->AsInt()->value();	
 
-		InventoryItemRef item = m_manager->item_factory.GetItem( args.data->GetItem( 0 )->AsList()->GetItem( 0 )->AsInt()->value() );
-
-		if( !item->HasAttribute( AttrHp ) )
-		{
-			_log( SERVICE__ERROR, "Item %u doesnt has attribute %u", args.data->GetItem( 0 )->AsList()->GetItem( 0 )->AsInt()->value(), AttrHp );
-			return new PyNone;
-		}
+		InventoryItemRef item = m_manager->item_factory.GetItem( itemID );
 
 		if( !item->HasAttribute( AttrDamage ) )
 		{
-			_log( SERVICE__ERROR, "Item %u doesnt has attribute %u", args.data->GetItem( 0 )->AsList()->GetItem( 0 )->AsInt()->value(), AttrDamage );
+			_log( SERVICE__ERROR, "Item %u doesnt has attribute %u", itemID, AttrDamage );
 			return new PyNone;
 		}
 
-		EvilNumber hp = item->GetAttribute( AttrHp );
-		uint32 damage = hp.get_int() * args.data->GetItem( 0 )->AsList()->GetItem( 1 )->AsInt()->value() / 100;
-
-		item->SetAttribute( AttrDamage, hp.get_int() - damage );
+		item->SetAttribute( AttrDamage, damage );
 	}
 
 	return new PyNone;
@@ -312,89 +305,27 @@ PyResult RepairBound::Handle_RepairItems( PyCallArgs& call )
 		_log(SERVICE__ERROR, "Cant decode args for RepairItems" );
 		return new PyNone;
 	}
-	/*
+
 	double cost = args.cost;
-	double isk = call.client->GetBalance();
-	double damageRepairCost = 0;
+	double total = 0.0;
 
-	if( isk < cost )
+	for( size_t i = 0; i < args.itemID->size(); i ++ )
 	{
-		call.client->SendNotifyMsg( "You dont have enough ISK to repair the selected items" );
-		return new PyNone;
-	}
+		InventoryItemRef item = m_manager->item_factory.GetItem( args.itemID->GetItem( 0 )->AsInt()->value() );
+		total = item->typeID() * item->GetAttribute( AttrDamage ).get_int();
 
-	call.client->AddBalance( -cost );
-
-	InventoryItemRef item = m_manager->item_factory.GetItem( args.itemID );
-
-	if( item->categoryID() == EVEDB::invCategories::Ship )
-	{
-		ShipRef ship = m_manager->item_factory.GetShip( args.itemID );
-		std::vector<InventoryItemRef> modules;
-		ship->FindByFlagRange( flagLowSlot0, flagHiSlot7, modules );
-
-		std::vector<InventoryItemRef>::iterator cur, end;
-		
-		cur = modules.begin();
-		end = modules.end();
-
-		for(; cur != end; cur++)
+		if( cost >= total )
 		{
-			if( cur->get()->HasAttribute( AttrDamage ) )
-				damageRepairCost = ( cur->get()->typeID() * cur->get()->GetAttribute( AttrDamage ).get_int() );
-			else
-				continue;
-			cost - damageRepairCost;
-			if( cost < 0 )
-			{
-				call.client->SendInfoModalMsg( "You don't have enought ISK. Not all items got repaired" );
-				return new PyNone;
-			}
-
-			cur->get()->SetAttribute( AttrDamage, 0 );
-
-			if( ( cur->get()->HasAttribute( AttrHp ) ) && ( cur->get()->HasAttribute( AttrArmorHP ) ) )
-				cur->get()->SetAttribute( AttrArmorHP, cur->get()->GetAttribute( AttrHp ) );
-			
+			call.client->AddBalance( -total );
+			item->SetAttribute( AttrDamage, 0, true );
+			cost -= total;
 		}
-
-		if( ship->HasAttribute( AttrDamage ) )
-			damageRepairCost = ( ship->typeID() * item->GetAttribute( AttrDamage ).get_int() );
 		else
-			return new PyNone;
-
-		cost - damageRepairCost;
-		if( cost < 0 )
 		{
-			call.client->SendInfoModalMsg( "You don't have enought ISK. Not all items got repaired" );
-			return new PyNone;
+			continue;
 		}
-		
-		ship->SetAttribute( AttrDamage, 0 );
-		
-		if( ( ship->HasAttribute( AttrHp ) ) && ( ship->HasAttribute( AttrArmorHP ) ) )
-			ship->SetAttribute( AttrArmorHP, ship->GetAttribute( AttrHp ) );
 	}
-	else
-	{
-		if( item->HasAttribute( AttrDamage ) )
-			damageRepairCost = ( item->typeID() * item->GetAttribute( AttrDamage ).get_int() );
-		else
-			return new PyNone;
 
-		cost - damageRepairCost;
-		if( cost < 0 )
-		{
-			call.client->SendInfoModalMsg( "You don't have enought ISK. Not all items got repaired" );
-			return new PyNone;
-		}
-		
-		item->SetAttribute( AttrDamage, 0 );
-		
-		if( ( item->HasAttribute( AttrHp ) ) && ( item->HasAttribute( AttrArmorHP ) ) )
-			item->SetAttribute( AttrArmorHP, item->GetAttribute( AttrHp ) );
-	}
-	*/
 	return new PyNone;
 }
 

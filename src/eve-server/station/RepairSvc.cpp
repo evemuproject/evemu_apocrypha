@@ -308,6 +308,7 @@ PyResult RepairBound::Handle_RepairItems( PyCallArgs& call )
 
 	double cost = args.cost;
 	double total = 0.0;
+	double total_paid = 0.0;
 
 	for( size_t i = 0; i < args.itemID->size(); i ++ )
 	{
@@ -319,11 +320,32 @@ PyResult RepairBound::Handle_RepairItems( PyCallArgs& call )
 			call.client->AddBalance( -total );
 			item->SetAttribute( AttrDamage, 0, true );
 			cost -= total;
+			total_paid += total;
 		}
 		else
 		{
 			continue;
 		}
+	}
+
+	std::string reason = "Repair cost for ";
+	reason += m_manager->item_factory.GetItem( args.itemID->GetItem( 0 )->AsInt()->value() )->itemName();
+	reason += ".";
+
+	if( !m_db->GiveCash(
+		call.client->GetCharacterID(),
+		RefType_RepairBill,
+		call.client->GetCharacterID(),
+		1, 
+		"1",
+		call.client->GetAccountID(),
+		accountCash,
+		-total_paid,
+		call.client->GetBalance(),
+		reason.c_str ()
+		) )
+	{
+		codelog(CLIENT__ERROR, "Failed to record repair transaction." );
 	}
 
 	return new PyNone;

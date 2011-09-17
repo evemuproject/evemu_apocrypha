@@ -51,6 +51,7 @@ protected:
 	PyCallable_DECL_CALL(LookupCorporationTickers)
 	PyCallable_DECL_CALL(LookupStations)
 	PyCallable_DECL_CALL(LookupKnownLocationsByGroup)
+	PyCallable_DECL_CALL(LookupCorporationsOrAlliances)
 	//PyCallable_DECL_CALL()
 
 	//overloaded in order to support bound objects:

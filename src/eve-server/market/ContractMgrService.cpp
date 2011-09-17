@@ -254,7 +254,6 @@ PyResult ContractMgrService::Handle_GetContractListForOwner( PyCallArgs& call )
 		fieldData->AddItemInt( contract->avail() );
 		fieldData->AddItemInt( contract->assigneeID() );
 		fieldData->AddItemInt( contract->expiretime() );
-		fieldData->AddItemInt( contract->duration() );
 		fieldData->AddItemInt( contract->startStationID() );
 		fieldData->AddItemInt( contract->endStationID() );
 		fieldData->AddItemInt( contract->startSolarSystemID() );
@@ -268,13 +267,14 @@ PyResult ContractMgrService::Handle_GetContractListForOwner( PyCallArgs& call )
 		fieldData->AddItemString( contract->description().c_str() );
 		fieldData->AddItemInt( contract->forCorp() );
 		fieldData->AddItemInt( contract->status() );
-		fieldData->AddItemInt( contract->isAccepted() );
 		fieldData->AddItemInt( contract->acceptorID() );
 		fieldData->AddItemInt( contract->dateIssued() );
 		fieldData->AddItemInt( contract->dateExpired() );
 		fieldData->AddItemInt( contract->dateAccepted() );
 		fieldData->AddItemInt( contract->dateCompleted() );
 		fieldData->AddItemInt( contract->volume() );
+		fieldData->AddItemInt( contract->issuerAllianceID() );
+		fieldData->AddItemInt( contract->issuerWalletKey() );
 		into->SetField( contract->contractID(), fieldData );
 		fieldData = new PyList;
 
@@ -465,7 +465,6 @@ PyResult ContractMgrService::Handle_CreateContract( PyCallArgs& call )
 	{
 		forCorp = call.byname.find( "forCorp" )->second->AsBool()->value();
 	}
-
 
 	// Let's see the players limit of contracts
 	CharacterRef ch = call.client->GetChar();

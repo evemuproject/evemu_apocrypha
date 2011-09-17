@@ -168,6 +168,26 @@ PyResult InsuranceBound::Handle_InsureShip( PyCallArgs& call )
 		call.client->SendInfoModalMsg( "You can't insure repackaged ships..." );
 		return new PyBool( false );
 	}
+
+	std::string reason = "Insurance fee for ";
+	reason += m_manager->item_factory.GetItem( args.shipID )->itemName();
+	reason += ".";
+	
+	if( !m_db->GiveCash(
+		call.client->GetCharacterID(),
+		RefType_Insurance,
+		call.client->GetCharacterID(),
+		1, 
+		"1",
+		call.client->GetAccountID(),
+		accountCash,
+		-args.cost,
+		call.client->GetBalance(),
+		reason.c_str ()
+		) )
+	{
+		codelog(CLIENT__ERROR, "Failed to record insurance transaction." );
+	}
 	
 	return new PyBool( m_db->InsureShip( args.shipID, call.client->GetCharacterID(), fraction / 5 ) );
 }

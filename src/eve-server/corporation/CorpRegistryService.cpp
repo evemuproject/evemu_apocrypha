@@ -61,6 +61,7 @@ public:
         PyCallable_REG_CALL(CorpRegistryBound, UpdateDivisionNames)
         PyCallable_REG_CALL(CorpRegistryBound, UpdateCorporation)
         PyCallable_REG_CALL(CorpRegistryBound, UpdateLogo)
+		PyCallable_REG_CALL(CorpRegistryBound, SetAccountKey)
     }
     virtual ~CorpRegistryBound() { delete m_dispatch; }
     virtual void Release() {
@@ -87,6 +88,7 @@ public:
     PyCallable_DECL_CALL(UpdateDivisionNames)
     PyCallable_DECL_CALL(UpdateCorporation)
     PyCallable_DECL_CALL(UpdateLogo)
+	PyCallable_DECL_CALL(SetAccountKey)
 
 protected:
     bool JoinCorporation(Client *who, uint32 newCorpID, const CorpMemberInfo &roles);
@@ -300,7 +302,7 @@ bool CorpRegistryBound::JoinCorporation(Client *who, uint32 newCorpID, const Cor
         return false;
     }
 
-    who->JoinCorporationUpdate(newCorpID);
+    who->JoinCorporationUpdate(newCorpID, roles);
     return true;
 }
 
@@ -353,7 +355,7 @@ PyResult CorpRegistryBound::Handle_GetOffices(PyCallArgs &call) {
     }
 
     CorpOfficeSparseRowset ret;
-
+	
     //now we register
     PyDict *dict = new PyDict();
 
@@ -689,7 +691,7 @@ PyResult CorpRegistryBound::Handle_UpdateApplicationOffer(PyCallArgs &call) {
 
         Client *recruit = m_manager->entity_list.FindCharacter(ocmc.charID);
         if(recruit != NULL) {
-            recruit->JoinCorporationUpdate(ocmc.newCorpID);
+            recruit->JoinCorporationUpdate(ocmc.newCorpID, CorpMemberInfo());
         }
 
         break;
@@ -781,6 +783,8 @@ PyResult CorpRegistryBound::Handle_UpdateApplication(PyCallArgs &call) {
 
 PyResult CorpRegistryBound::Handle_UpdateDivisionNames(PyCallArgs &call) {
     Call_UpdateDivisionNames divs;
+
+	call.tuple->Dump( CLIENT__CALL_DUMP, "UDN " );
 
     if (!divs.Decode(&call.tuple)) {
         codelog(SERVICE__ERROR, "%s: Bad arguments", call.client->GetName());
@@ -926,3 +930,49 @@ PyResult CorpRegistryBound::Handle_UpdateLogo(PyCallArgs &call) {
 
     return m_db.GetCorporation(notif.key);
 }
+
+PyResult CorpRegistryBound::Handle_SetAccountKey( PyCallArgs& call )
+{
+	call.tuple->Dump( CLIENT__CALL_DUMP, "SetAccountKey" );
+
+	// This is sent AS SESSION VALUE
+	/*
+		Session class values:
+		 'regionid',
+		 'constellationid',
+		 'allianceid',
+		 'warfactionid',
+		 'corpid',
+		 'fleetid',
+		 'fleetrole',
+		 'fleetbooster',
+		 'wingid',
+		 'squadid',
+		 'shipid',
+		 'stationid',
+		 'stationid2',
+		 'worldspaceid', - Maybe for when we're undocked ?
+		 'solarsystemid',
+		 'solarsystemid2',
+		 'hqID',
+		 'baseID',
+		 'rolesAtAll',
+		 'rolesAtHQ',
+		 'rolesAtBase',
+		 'rolesAtOther',
+		 'genderID',
+		 'bloodlineID',
+		 'raceID',
+		 'corpAccountKey', - Corp Account Key
+		 'inDetention'
+	*/
+
+	// Update session with new corpAccountKey data
+	call.client->UpdateSession( "corpAccountKey", call.tuple->GetItem( 0 )->AsInt()->value() );
+
+	// Also store this for when we need to do a session change
+	call.client->GetChar()->setWalletKey( call.tuple->GetItem( 0 )->AsInt()->value() );
+
+	return new PyNone;
+}
+

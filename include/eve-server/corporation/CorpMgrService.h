@@ -43,6 +43,8 @@ protected:
 	CorporationDB m_db;
 
 	PyCallable_DECL_CALL(GetPublicInfo)
+	PyCallable_DECL_CALL(GetAssetInventory)
+	PyCallable_DECL_CALL(GetCorporations)
 };
 
 

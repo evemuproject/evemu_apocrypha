@@ -82,6 +82,7 @@ LookupService::LookupService(PyServiceMgr *mgr)
 	PyCallable_REG_CALL(LookupService, LookupCorporationTickers)
 	PyCallable_REG_CALL(LookupService, LookupStations)
 	PyCallable_REG_CALL(LookupService, LookupKnownLocationsByGroup)
+	PyCallable_REG_CALL(LookupService, LookupCorporationsOrAlliances)
 	//PyCallable_REG_CALL(LookupService, )
 }
 
@@ -175,6 +176,18 @@ PyResult LookupService::Handle_LookupKnownLocationsByGroup(PyCallArgs &call) {
 	}
 	
 	return m_db.LookupKnownLocationsByGroup(args.searchString, args.searchOption);
+}
+
+PyResult LookupService::Handle_LookupCorporationsOrAlliances( PyCallArgs& call )
+{
+	Call_LookupStringInt args;
+	if( !args.Decode( &call.tuple ) )
+	{
+		codelog( SERVICE__ERROR, "Wrong incoming param in LookupCorporationsOrAlliances" );
+		return NULL;
+	}
+
+	return m_db.LookupCorporations( args.searchString.c_str() );
 }
 
 

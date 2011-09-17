@@ -245,8 +245,8 @@ void Contract::GetContractRow( PyPackedRow* into )
 	into->SetField( "price",				new PyFloat(	price() ) );
 	into->SetField( "reward",				new PyFloat(	reward() ) );
 	into->SetField( "collateral",			new PyFloat(	collateral() ) );
-	into->SetField( "title",				new PyWString(	"title", 5 ) );
-	into->SetField( "description",			new PyWString(	"description", 11 ) );
+	into->SetField( "title",				new PyWString(	title().c_str(), title().length() ) );
+	into->SetField( "description",			new PyWString(	description().c_str(), description().length() ) );
 	into->SetField( "forCorp",				new PyBool(		forCorp() ) );
 	into->SetField( "status",				new PyInt(		status() ) );
 	into->SetField( "acceptorID",			new PyInt(		acceptorID() ) );

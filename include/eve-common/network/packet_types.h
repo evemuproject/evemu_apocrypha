@@ -547,12 +547,14 @@ typedef enum JournalRefType {
 	RefType_corpPayment = 11,
 	RefType_corpRegFee = 39,
 	RefType_officeRentalFee = 13,
-	RefType_playerDonation = 10
+	RefType_playerDonation = 10,
+	RefType_Insurance = 19,
+	RefType_RepairBill = 15
 } JournalRefType;
 
 //from market_keyMap
 typedef enum {
-	accountCash = 1000,
+	accountCash = 1000, // Be careful, there can be up to 7 divisions, so this number will get incremented
 	accountProperty = 1100,
 	accountEscrow = 1500,
 	accountReceivables = 1800,

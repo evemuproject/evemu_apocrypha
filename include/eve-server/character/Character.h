@@ -385,7 +385,7 @@ public:
 	 */
 	bool AlterBalance(double balanceChange);
 	void SetLocation(uint32 stationID, uint32 solarSystemID, uint32 constellationID, uint32 regionID);
-	void JoinCorporation(uint32 corporationID);
+	void JoinCorporation(uint32 corporationID, const CorpMemberInfo &roles);
 	void SetDescription(const char *newDescription);
 
 	void Delete();
@@ -623,6 +623,10 @@ public:
 	uint64                  createDateTime() const { return m_createDateTime; }
 	uint64                  corporationDateTime() const { return m_corporationDateTime; }
 
+	// Wallet important info:
+	uint32					getWalletKey() const { return m_walletKey; }
+	void					setWalletKey( uint32 key ) { m_walletKey = key; }
+
 	void SaveCharacter();
 	void SaveSkillQueue() const;
 	void SaveCertificates() const;
@@ -734,6 +738,8 @@ protected:
 	uint64 m_startDateTime;
 	uint64 m_createDateTime;
 	uint64 m_corporationDateTime;
+
+	uint32 m_walletKey;
 
 	// Skill queue:
 	SkillQueue m_skillQueue;

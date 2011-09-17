@@ -127,6 +127,7 @@ public:
 	PyRep *InstallClone( uint32 characterID, uint32 stationID, Client* who );
 	PyRep *DestroyClone( uint32 characterID, uint32 cloneID, uint32 locationID, Client* who );
 	PyRep *GetCharacterClones( uint32 characterID );
+	PyRep *GetShipRepairQuote( uint32 itemID );
 
 protected:
 	static storage thingy;

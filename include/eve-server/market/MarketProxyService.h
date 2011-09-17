@@ -54,6 +54,7 @@ protected:
     PyCallable_DECL_CALL(ModifyCharOrder)
     PyCallable_DECL_CALL(CancelCharOrder)
     PyCallable_DECL_CALL(CharGetNewTransactions)
+	PyCallable_DECL_CALL(CorpGetNewTransactions)
 	PyCallable_DECL_CALL(StartupCheck)
 	//PyCallable_DECL_CALL(GetCorporationOrders) //()
 	

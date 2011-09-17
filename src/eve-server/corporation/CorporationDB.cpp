@@ -328,13 +328,32 @@ static std::string _IoN( PyRep* r )
 
 bool CorporationDB::AddCorporation(Call_AddCorporation & corpInfo, uint32 charID, uint32 stationID, uint32 & corpID) {
     DBerror err;
+	DBResultRow row;
     corpID = 0;
+	DBQueryResult res;
 
     std::string cName, cDesc, cTick, cURL;
     sDatabase.DoEscapeString(cName, corpInfo.corpName);
     sDatabase.DoEscapeString(cDesc, corpInfo.description);
     sDatabase.DoEscapeString(cTick, corpInfo.corpTicker);
     sDatabase.DoEscapeString(cURL, corpInfo.url);
+
+	// First of all check if the ticker name is already in use
+	if( !sDatabase.RunQuery( res,
+		"SELECT "
+		" corporationID"
+		" FROM crpnpctickernames"
+		" WHERE tickerName='%s'",
+		cTick ))
+	{
+		codelog(DATABASE__ERROR, "Error in query: %s", res.error.c_str() );
+		return false;
+	}
+
+	if( res.GetRow( row ) )
+	{
+		return false;
+	}
 
     //TODO: we should be able to get our race ID directly from our Client
     //object eventually, instead of pulling it from this join.
@@ -420,7 +439,8 @@ bool CorporationDB::CreateCorporationChangePacket(Notify_OnCorporaionChanged & c
         "   allianceID,shares,memberCount,memberLimit,allowedMemberRaceIDs,"
         "   graphicID,shape1,shape2,shape3,color1,color2,color3,typeface,"
         "   division1,division2,division3,division4,division5,division6,"
-        "   division7,deleted"
+        "   division7,deleted,walletDivision2,walletDivision3,"
+		"	walletDivision4,walletDivision5,walletDivision6,walletDivision7 "
         " FROM corporation "
         " WHERE corporationID = %u ", newCorpID
         ))
@@ -478,7 +498,8 @@ bool CorporationDB::CreateCorporationChangePacket(Notify_OnCorporaionChanged & c
         "   allianceID,shares,memberCount,memberLimit,allowedMemberRaceIDs,"
         "   graphicID,shape1,shape2,shape3,color1,color2,color3,typeface,"
         "   division1,division2,division3,division4,division5,division6,"
-        "   division7,deleted"
+        "   division7,deleted,walletDivision2,walletDivision3,"
+		"	walletDivision4,walletDivision5,walletDivision6,walletDivision7 "
         " FROM corporation "
         " WHERE corporationID = %u ", oldCorpID
         ))
@@ -601,7 +622,8 @@ bool CorporationDB::CreateCorporationCreatePacket(Notify_OnCorporaionChanged & c
         "   allianceID,shares,memberCount,memberLimit,allowedMemberRaceIDs,"
         "   graphicID,shape1,shape2,shape3,color1,color2,color3,typeface,"
         "   division1,division2,division3,division4,division5,division6,"
-        "   division7,deleted"
+        "   division7,deleted,walletDivision2,walletDivision3,"
+		"	walletDivision4,walletDivision5,walletDivision6,walletDivision7 "
         " FROM corporation "
         " WHERE corporationID = %u ", newCorpID
         ))
@@ -702,7 +724,8 @@ PyObject *CorporationDB::GetCorporation(uint32 corpID) {
         "   allianceID,shares,memberCount,memberLimit,allowedMemberRaceIDs,"
         "   graphicID,shape1,shape2,shape3,color1,color2,color3,typeface,"
         "   division1,division2,division3,division4,division5,division6,"
-        "   division7,deleted"
+        "   division7,deleted,walletDivision2,walletDivision3,"
+		"	walletDivision4,walletDivision5,walletDivision6,walletDivision7 "
         " FROM corporation "
         " WHERE corporationID = %u", corpID))
     {
@@ -770,7 +793,7 @@ uint32 CorporationDB::GetOffices(uint32 corpID) {
 
     if (!sDatabase.RunQuery(res,
         " SELECT "
-        " COUNT(1) AS OfficeNumber "
+		" COUNT(stationID) AS officeNumber "
         " FROM crpOffices "
         " WHERE corporationID = %u ", corpID
         ))
@@ -1142,46 +1165,55 @@ bool CorporationDB::CreateMemberAttributeUpdate(MemberAttributeUpdate & attrib, 
 bool CorporationDB::UpdateDivisionNames(uint32 corpID, const Call_UpdateDivisionNames & divs, PyDict * notif) {
     DBQueryResult res;
 
-    if (!sDatabase.RunQuery(res,
+    if( !sDatabase.RunQuery( res,
         " SELECT "
-        " division1, division2, division3, division4, division5, division6, division7 "
+        " division1, division2, division3, division4, division5, division6, division7, "
+		" walletDivision2, walletDivision3, walletDivision4, walletDivision5, walletDivision6, walletDivision7 "
         " FROM corporation "
-        " WHERE corporationID = %u ", corpID))
+        " WHERE corporationID = %u ", corpID ) )
     {
-        codelog(SERVICE__ERROR, "Error in query: %s", res.error.c_str());
+        codelog( SERVICE__ERROR, "Error in query: %s", res.error.c_str() );
         return false;
     }
 
     DBResultRow row;
-    if (!res.GetRow(row)) {
-        _log(DATABASE__ERROR, "Corporation %u doesn't exists.", corpID);
+    if( !res.GetRow( row ) )
+	{
+        _log( DATABASE__ERROR, "Corporation %u doesn't exists.", corpID );
         return false;
     }
 
     // We are here, so something must have changed...
     std::vector<std::string> dbQ;
-    ProcessStringChange("division1", row.GetText(0), divs.div1, notif, dbQ);
-    ProcessStringChange("division2", row.GetText(1), divs.div2, notif, dbQ);
-    ProcessStringChange("division3", row.GetText(2), divs.div3, notif, dbQ);
-    ProcessStringChange("division4", row.GetText(3), divs.div4, notif, dbQ);
-    ProcessStringChange("division5", row.GetText(4), divs.div5, notif, dbQ);
-    ProcessStringChange("division6", row.GetText(5), divs.div6, notif, dbQ);
-    ProcessStringChange("division7", row.GetText(6), divs.div7, notif, dbQ);
+    ProcessStringChange("division1",		   row.GetText( 0), divs.div1, notif, dbQ);
+    ProcessStringChange("division2",		   row.GetText( 1), divs.div2, notif, dbQ);
+    ProcessStringChange("division3",		   row.GetText( 2), divs.div3, notif, dbQ);
+    ProcessStringChange("division4",		   row.GetText( 3), divs.div4, notif, dbQ);
+    ProcessStringChange("division5",		   row.GetText( 4), divs.div5, notif, dbQ);
+    ProcessStringChange("division6",		   row.GetText( 5), divs.div6, notif, dbQ);
+    ProcessStringChange("division7",		   row.GetText( 6), divs.div7, notif, dbQ);
+	ProcessStringChange("walletDivision2",     row.GetText( 8), divs.wal2, notif, dbQ);
+	ProcessStringChange("walletDivision3",     row.GetText( 9), divs.wal3, notif, dbQ);
+	ProcessStringChange("walletDivision4",     row.GetText(10), divs.wal4, notif, dbQ);
+	ProcessStringChange("walletDivision5",     row.GetText(11), divs.wal5, notif, dbQ);
+	ProcessStringChange("walletDivision6",     row.GetText(12), divs.wal6, notif, dbQ);
+	ProcessStringChange("walletDivision7",     row.GetText(13), divs.wal7, notif, dbQ);
 
     std::string query = " UPDATE corporation SET ";
 
-    int N = dbQ.size();
-    for (int i = 0; i < N; i++) {
-        query = dbQ[i];
-        if (i < N - 1) query += ", ";
-    }
+	for( int i = 0; i < dbQ.size(); i ++ )
+	{
+		query += dbQ[i];
+		if( i < dbQ.size() - 1 ) query += ", ";
+	}
 
     query += " WHERE corporationID = %u";
 
-    if ((N > 0) && (!sDatabase.RunQuery(res.error, query.c_str(), corpID))) {
-        codelog(SERVICE__ERROR, "Error in query: %s", res.error.c_str());
-        return false;
-    }
+	if( ( dbQ.size() > 0  ) && ( !sDatabase.RunQuery( res.error, query.c_str(), corpID ) ) )
+	{
+		codelog( SERVICE__ERROR, "Error in query: %s", res.error.c_str() );
+		return false;
+	}
 
     return true;
 }

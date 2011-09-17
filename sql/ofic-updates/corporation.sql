@@ -11,3 +11,5 @@ ADD `divisionBalance4` DOUBLE NOT NULL DEFAULT '0',
 ADD `divisionBalance5` DOUBLE NOT NULL DEFAULT '0',
 ADD `divisionBalance6` DOUBLE NOT NULL DEFAULT '0',
 ADD `divisionBalance7` DOUBLE NOT NULL DEFAULT '0'
+
+UPDATE corporation SET creatorID=1 WHERE creatorID=0

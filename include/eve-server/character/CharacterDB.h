@@ -54,8 +54,6 @@ public:
 	bool GetActiveCloneType(uint32 characterID, uint32 &typeID); 
 	void GetCharacterData(uint32 characterID, std::map<std::string, uint32> &characterDataMap);
 
-	uint64 GetCharacterLastLogin( uint32 characterID );
-
 	bool ValidateCharName(const char *name);
 	/**
 	 * add_name_validation_set

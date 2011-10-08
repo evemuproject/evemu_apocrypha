@@ -139,8 +139,8 @@ public:
 	Contract(
 		uint32 _contractID,
 		ContractData &_contract,
-		const std::map<uint32, ContractRequestItemRef> _requestItems,
-		const std::map<uint32, ContractGetItemsRef> _items,
+		std::map<uint32, ContractRequestItemRef> _requestItems,
+		std::map<uint32, ContractGetItemsRef> _items,
 		ItemFactory &_itemFactory,
 		ContractFactory &_factory
 	);
@@ -288,8 +288,8 @@ protected:
 	const uint32 m_contractID;
 
 	// contract items
-	const std::map<uint32, ContractRequestItemRef> m_requestItems;
-	const std::map<uint32, ContractGetItemsRef> m_items;
+	std::map<uint32, ContractRequestItemRef> m_requestItems;
+	std::map<uint32, ContractGetItemsRef> m_items;
 };
 
 #endif /* !__CONTRACT__H__INCL__ */

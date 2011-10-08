@@ -58,6 +58,7 @@ RefPtr<_Ty> ContractFactory::_GetContract( uint32 contractID )
 {
 	std::map<uint32, ContractRef>::iterator res = m_contracts.find( contractID );
 
+	// This is dangerous and should never happen
 	if( res == m_contracts.end() )
 	{
 		// Load the item
@@ -81,16 +82,22 @@ void ContractFactory::DeleteContract( uint32 contractID )
 {
 	std::map<uint32, ContractRef>::iterator res = m_contracts.find( contractID );
 
-	if( res == m_contracts.end() ) sLog.Error( "Contract Factory", "Contract ID %u not found when requesting deletion!", contractID );
-	else m_contracts.erase( res );
+	if( res == m_contracts.end() )
+		sLog.Error( "Contract Factory", "Contract ID %u not found when requesting deletion!", contractID );
+	else
+		m_contracts.erase( res );
 }
 
 uint32 ContractFactory::CreateContract( ContractRef contractInfo )
 {
 	uint32 contractID = db().CreateContract( contractInfo );
 
-	ContractRef contract  = ContractRef( new Contract( contractID, (ContractData &)contractInfo->contractData(), contractInfo->requestItems(), contractInfo->items(), contractInfo->itemFactory(), contractInfo->contractFactory()  ) );
-	m_contracts.insert( std::make_pair( contractID, contract) ).first;
+	ContractData* data = new ContractData( contractInfo->contractData() );
+	std::map<uint32, ContractRequestItemRef> requestItems = contractInfo->requestItems();
+	std::map<uint32, ContractGetItemsRef> items = contractInfo->items();
+	
+	ContractRef contract  = ContractRef( new Contract( contractID, *data, requestItems, items, contractInfo->itemFactory(), *this ) );
+	m_contracts.insert( std::make_pair( contractID, contract ) ).first;
 
 	return contractID;
 }

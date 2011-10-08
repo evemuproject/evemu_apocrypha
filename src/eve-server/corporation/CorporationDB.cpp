@@ -1369,7 +1369,18 @@ PyRep *CorporationDB::GetPotentialHomeStations( uint32 constellationID )
 	return DBResultToRowset( res );
 }
 
+void CorporationDB::SetHQ( uint32 corpID, uint32 stationID )
+{
+	DBerror err;
 
+	if( !sDatabase.RunQuery( err,
+		"UPDATE corporation"
+		" SET stationID = %u"
+		" WHERE corporationID = %u", stationID, corpID ) )
+	{
+		_log( DATABASE__ERROR, "Failed to update HQ for corp %u. Error: %s", corpID, err.c_str() );
+	}
+}
 
 
 

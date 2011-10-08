@@ -53,6 +53,7 @@ public:
 		PyCallable_REG_CALL(CorpStationMgrIMBound, RentOffice)
         PyCallable_REG_CALL(CorpStationMgrIMBound, GetCorporateStationOffice)
 		PyCallable_REG_CALL(CorpStationMgrIMBound, GetNumberOfUnrentedOffices)
+		PyCallable_REG_CALL(CorpStationMgrIMBound, MoveCorpHQHere)
 	}
 	virtual ~CorpStationMgrIMBound() { delete m_dispatch; }
 	virtual void Release() {
@@ -70,6 +71,7 @@ public:
 	PyCallable_DECL_CALL(RentOffice)
     PyCallable_DECL_CALL(GetCorporateStationOffice)
 	PyCallable_DECL_CALL(GetNumberOfUnrentedOffices)
+	PyCallable_DECL_CALL(MoveCorpHQHere)
 
 protected:
     Dispatcher *const m_dispatch;
@@ -580,7 +582,32 @@ PyResult CorpStationMgrIMBound::Handle_GetNumberOfUnrentedOffices( PyCallArgs &c
 }
 
 
+PyResult CorpStationMgrIMBound::Handle_MoveCorpHQHere( PyCallArgs &call )
+{
 
+	sLog.Debug( "CorpStationMgrIMBount", "Called MoveCorpHQHere stub." );
+
+	uint32 stationID = call.client->GetStationID();
+	uint32 corpID = call.client->GetCorporationID();
+
+	m_db.SetHQ( corpID, stationID );
+
+	std::vector<Client *> clients;
+
+	m_manager->entity_list.FindByCorpID( corpID, clients );
+
+	std::vector<Client *>::iterator cur, end;
+
+	cur = clients.begin();
+	end = clients.end();
+
+	for( ; cur != end; cur ++ )
+	{
+		(*cur)->UpdateSession( "hqID", stationID );
+	}
+
+	return new PyBool( true );
+}
 
 
 

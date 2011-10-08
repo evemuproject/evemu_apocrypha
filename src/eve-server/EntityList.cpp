@@ -393,3 +393,16 @@ SystemManager *EntityList::FindOrBootSystem(uint32 systemID) {
 	m_systems[systemID] = mgr;
 	return mgr;
 }
+
+void EntityList::FindByCorpID(uint32 corpID, std::vector<Client *> &result) const
+{
+	// Basically the same as FindByRegionID
+
+	client_list::const_iterator cur, end;
+	cur = m_clients.begin();
+	end = m_clients.end();
+	for(; cur != end; cur++) {
+		if((*cur)->GetCorporationID() == corpID)
+			result.push_back(*cur);
+	}
+}

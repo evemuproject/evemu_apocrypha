@@ -1,3 +1,256 @@
+--
+-- Base de datos: `evemu`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `chrboosters`
+--
+
+CREATE TABLE IF NOT EXISTS `chrboosters` (
+  `itemID` int(10) NOT NULL,
+  `expiretime` bigint(20) NOT NULL,
+  `plugDate` bigint(20) NOT NULL,
+  `ownerID` int(11) NOT NULL,
+  PRIMARY KEY (`itemID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcar la base de datos para la tabla `chrboosters`
+--
+
+--
+-- Base de datos: `evemu`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `chrcertificates`
+--
+
+CREATE TABLE IF NOT EXISTS `chrcertificates` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `characterID` int(10) NOT NULL,
+  `certificateID` int(10) NOT NULL,
+  `grantDate` bigint(20) NOT NULL,
+  `visibilityFlags` int(10) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+--
+-- Volcar la base de datos para la tabla `chrcertificates`
+--
+
+--
+-- Base de datos: `evemu`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `chrclones`
+--
+
+CREATE TABLE IF NOT EXISTS `chrclones` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `characterID` int(10) NOT NULL,
+  `stationID` int(10) NOT NULL,
+  `itemID` int(10) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+--
+-- Volcar la base de datos para la tabla `chrclones`
+--
+
+--
+-- Base de datos: `evemu`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `chrcontractinfo`
+--
+
+CREATE TABLE IF NOT EXISTS `chrcontractinfo` (
+  `characterID` int(10) NOT NULL,
+  `numOutstandingContractsNonCorp` int(10) NOT NULL,
+  `numOutstandingContractsForCorp` int(10) NOT NULL,
+  `numOutstandingContracts` int(10) NOT NULL,
+  `numContractsLeft` int(10) NOT NULL,
+  `numRequiresAttention` int(10) NOT NULL,
+  `numRequiresAttentionCorp` int(10) NOT NULL,
+  `numAssignedTo` int(10) NOT NULL,
+  `numAssignedToCorp` int(10) NOT NULL,
+  `numBiddingOn` int(10) NOT NULL,
+  `numInProgress` int(10) NOT NULL,
+  `numBiddingOnCorp` int(10) NOT NULL,
+  `numInProgressCorp` int(10) NOT NULL,
+  PRIMARY KEY (`characterID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcar la base de datos para la tabla `chrcontractinfo`
+--
+--
+-- Base de datos: `evemu`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `chrshipinsurances`
+--
+
+CREATE TABLE IF NOT EXISTS `chrshipinsurances` (
+  `insuranceID` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `ownerID` int(10) unsigned NOT NULL,
+  `shipID` int(10) unsigned NOT NULL,
+  `fraction` int(10) NOT NULL,
+  `startDate` bigint(20) NOT NULL,
+  `endDate` bigint(20) NOT NULL,
+  PRIMARY KEY (`insuranceID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcar la base de datos para la tabla `chrshipinsurances`
+--
+
+
+--
+-- Base de datos: `evemu`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `contract`
+--
+
+CREATE TABLE IF NOT EXISTS `contract` (
+  `contractID` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `issuerID` int(10) unsigned NOT NULL DEFAULT '0',
+  `issuerCorpID` int(10) unsigned NOT NULL,
+  `type` int(10) NOT NULL,
+  `avail` int(10) NOT NULL,
+  `assigneeID` int(10) NOT NULL,
+  `expiretime` int(10) NOT NULL,
+  `duration` int(10) NOT NULL,
+  `startStationID` int(10) unsigned NOT NULL,
+  `endStationID` int(10) unsigned NOT NULL,
+  `startSolarSystemID` int(10) unsigned NOT NULL,
+  `endSolarSystemID` int(10) unsigned DEFAULT NULL,
+  `startRegionID` int(10) unsigned NOT NULL,
+  `endRegionID` int(10) unsigned DEFAULT NULL,
+  `price` double NOT NULL,
+  `reward` double NOT NULL,
+  `collateral` double NOT NULL,
+  `title` varchar(85) DEFAULT NULL,
+  `description` text,
+  `forCorp` tinyint(1) NOT NULL,
+  `status` int(10) NOT NULL,
+  `isAccepted` tinyint(1) NOT NULL,
+  `acceptorID` int(10) DEFAULT NULL,
+  `dateIssued` bigint(20) DEFAULT NULL,
+  `dateExpired` bigint(20) DEFAULT NULL,
+  `dateAccepted` bigint(20) DEFAULT NULL,
+  `dateCompleted` bigint(20) DEFAULT NULL,
+  `volume` double DEFAULT NULL,
+  `requiresAttention` tinyint(1) NOT NULL DEFAULT '0',
+  `crateID` int(10) unsigned NOT NULL DEFAULT '0',
+  `issuerWalletKey` int(10) unsigned NOT NULL DEFAULT '0',
+  `issuerAllianceID` int(10) unsigned NOT NULL DEFAULT '0',
+  `acceptorWalletKey` int(10) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`contractID`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+--
+-- Volcar la base de datos para la tabla `contract`
+--
+
+--
+-- Base de datos: `evemu`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `contracts_items`
+--
+
+CREATE TABLE IF NOT EXISTS `contracts_items` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `contractID` int(10) NOT NULL,
+  `itemTypeID` int(10) NOT NULL,
+  `quantity` int(10) NOT NULL,
+  `inCrate` tinyint(1) NOT NULL,
+  `itemID` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcar la base de datos para la tabla `contracts_items`
+--
+
+--
+-- Base de datos: `evemu`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `contract_bids`
+--
+
+CREATE TABLE IF NOT EXISTS `contract_bids` (
+  `bidID` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `contractID` int(10) unsigned NOT NULL,
+  `issuerID` int(10) unsigned NOT NULL,
+  `quantity` double unsigned NOT NULL,
+  `issuerCorpID` int(10) unsigned NOT NULL,
+  `issuerStationID` int(10) unsigned NOT NULL,
+  `issuerSolarSystemID` int(10) unsigned NOT NULL,
+  `issuerRegionID` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`bidID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcar la base de datos para la tabla `contract_bids`
+--
+
+ALTER TABLE `corporation`
+ADD `walletDivision2` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '2nd Wallet Division',
+ADD `walletDivision3` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '3rd Wallet Division',
+ADD `walletDivision4` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '4th Wallet Division',
+ADD `walletDivision5` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '5th Wallet Division',
+ADD `walletDivision6` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '6th Wallet Division',
+ADD `walletDivision7` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '7th Wallet Division',
+ADD `divisionBalance2` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance3` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance4` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance5` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance6` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance7` DOUBLE NOT NULL DEFAULT '0';
+
+ALTER TABLE `corporationstatic`
+ADD `walletDivision2` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '2nd Wallet Division',
+ADD `walletDivision3` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '3rd Wallet Division',
+ADD `walletDivision4` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '4th Wallet Division',
+ADD `walletDivision5` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '5th Wallet Division',
+ADD `walletDivision6` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '6th Wallet Division',
+ADD `walletDivision7` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '7th Wallet Division',
+ADD `divisionBalance2` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance3` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance4` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance5` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance6` DOUBLE NOT NULL DEFAULT '0',
+ADD `divisionBalance7` DOUBLE NOT NULL DEFAULT '0';
+
+UPDATE `corporation` SET creatorID=1 WHERE creatorID=0;
+UPDATE `corporationstatic` SET creatorID=1 WHERE creatorID=0;
 -- No longer needed
 DROP TABLE entityStatic;
 INSERT INTO `staStations` (`stationID`, `security`, `dockingCostPerVolume`, `maxShipVolumeDockable`, `officeRentalCost`, `operationID`, `stationTypeID`, `corporationID`, `solarSystemID`, `constellationID`, `regionID`, `stationName`, `x`, `y`, `z`, `reprocessingEfficiency`, `reprocessingStationsTake`, `reprocessingHangarFlag`) VALUES(60014839, 500, 0, 50000000, 1000, 45, 54, 1000173, 30000380, 20000054, 10000004, 'Polaris I - Station', 35263733760, 4932526080, 55459307520, 0.5, 0.025, 4);

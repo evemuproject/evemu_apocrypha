@@ -493,13 +493,15 @@ void Client::_UpdateSession( const CharacterConstRef& character )
     if( character->stationID() == 0 )
     {
         mSession.Clear( "stationid" );
-
+		
         mSession.SetInt( "solarsystemid", character->solarSystemID() );
         mSession.SetInt( "locationid", character->solarSystemID() );
+		mSession.SetInt( "worldspaceid", character->solarSystemID() ); // This( like stationID or solarsystemID ) is a locationID, so test this...
     }
     else
     {
         mSession.Clear( "solarsystemid" );
+		mSession.Clear( "worldspaceid" );
 
         mSession.SetInt( "stationid", character->stationID() );
         mSession.SetInt( "locationid", character->stationID() );
@@ -516,6 +518,8 @@ void Client::_UpdateSession( const CharacterConstRef& character )
     mSession.SetLong( "rolesAtOther", character->rolesAtOther() );
 
     mSession.SetInt( "shipid", character->locationID() );
+
+	mSession.SetInt( "corpWalletKey", character->getWalletKey() );
 }
 
 void Client::_UpdateSession2( uint32 characterID )
@@ -541,6 +545,7 @@ void Client::_UpdateSession2( uint32 characterID )
     uint32 rolesAtHQ = 0;
     uint32 rolesAtOther = 0;
     uint32 locationID = 0;
+	uint32 corpWalletKey = 0;
 
     ((CharacterService *)(m_services.LookupService("character")))->GetCharacterData( characterID, characterDataMap );
 
@@ -562,6 +567,7 @@ void Client::_UpdateSession2( uint32 characterID )
     rolesAtHQ = characterDataMap["rolesAtHQ"];
     rolesAtOther = characterDataMap["rolesAtOther"];
     locationID = characterDataMap["locationID"];
+	corpWalletKey = characterDataMap["corpWalletKey"];
 
 
     mSession.SetInt( "charid", characterID );
@@ -572,10 +578,12 @@ void Client::_UpdateSession2( uint32 characterID )
 
         mSession.SetInt( "solarsystemid", solarSystemID );
         mSession.SetInt( "locationid", solarSystemID );
+		mSession.SetInt( "worldspaceid", solarSystemID ); // This( like stationID or solarsystemID ) is a locationID, so test this...
     }
     else
     {
         mSession.Clear( "solarsystemid" );
+		mSession.Clear( "worldspaceid" );
 
         mSession.SetInt( "stationid", stationID );
         mSession.SetInt( "locationid", stationID );
@@ -592,6 +600,8 @@ void Client::_UpdateSession2( uint32 characterID )
     mSession.SetLong( "rolesAtOther", rolesAtOther );
 
     mSession.SetInt( "shipid", locationID );
+
+	mSession.SetInt( "corpWalletKey", corpWalletKey );
 }
 
 void Client::_SendCallReturn( const PyAddress& source, uint64 callID, PyRep** return_value, const char* channel )
@@ -1332,8 +1342,8 @@ DoDestinyUpdate ,*args= ([(31759,
 }
 
 //assumes that the backend DB stuff was already done.
-void Client::JoinCorporationUpdate(uint32 corp_id) {
-    GetChar()->JoinCorporation(corp_id);
+void Client::JoinCorporationUpdate(uint32 corp_id, const CorpMemberInfo &roles) {
+    GetChar()->JoinCorporation(corp_id, roles);
 
     _UpdateSession( GetChar() );
 

@@ -183,6 +183,7 @@ void CharacterDB::GetCharacterData(uint32 characterID, std::map<std::string, uin
     characterDataMap["rolesAtHQ"] = row.GetUInt(9);
     characterDataMap["rolesAtOther"] = row.GetUInt(10);
     characterDataMap["locationID"] = row.GetUInt(11);
+	characterDataMap["corpWalletKey"] = 1000; // Master wallet, harcoded
 }
 
 PyObject *CharacterDB::GetCharPublicInfo3(uint32 characterID) {

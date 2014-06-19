@@ -27,7 +27,7 @@
 #ifndef __INSURANCE_SERVICE_H_INCL__
 #define __INSURANCE_SERVICE_H_INCL__
 
-#include "ship/ShipDB.h"
+#include "ship/InsuranceDB.h"
 #include "PyService.h"
 
 class InsuranceService
@@ -40,13 +40,13 @@ protected:
 	class Dispatcher;
 	Dispatcher *const m_dispatch;
 
-	ShipDB m_db;
+	InsuranceDB m_db;
 
 	PyCallable_DECL_CALL(GetContractForShip)
 	//PyCallable_DECL_CALL()
 
 	//overloaded in order to support bound objects:
-	//virtual PyBoundObject *_CreateBoundObject(Client *c, const PyRep *bind_args);
+	virtual PyBoundObject *_CreateBoundObject(Client *c, const PyRep *bind_args);
 };
 
 

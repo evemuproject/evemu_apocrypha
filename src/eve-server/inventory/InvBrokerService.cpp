@@ -148,6 +148,10 @@ PyResult InvBrokerBound::Handle_GetInventory(PyCallArgs &call) {
 			flag = flagNone;
 			break;
 
+		case containerCorpMarket:
+			flag = flagCorpMarket;
+			break;
+
         case containerSolarSystem:
         case containerScrapHeap:
         case containerFactory:
@@ -155,7 +159,6 @@ PyResult InvBrokerBound::Handle_GetInventory(PyCallArgs &call) {
         case containerRecycler:
         case containerOffices:
         case containerStationCharacters:
-        case containerCorpMarket:
         default:
             codelog(SERVICE__ERROR, "Unhandled container type %u", args.container);
             return NULL;

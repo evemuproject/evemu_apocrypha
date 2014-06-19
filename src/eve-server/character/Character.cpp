@@ -467,15 +467,16 @@ void Character::SetLocation(uint32 stationID, uint32 solarSystemID, uint32 const
     SaveCharacter();
 }
 
-void Character::JoinCorporation(uint32 corporationID) {
+void Character::JoinCorporation(uint32 corporationID, const CorpMemberInfo &roles) {
     m_corporationID = corporationID;
 
     //TODO: load new roles
-    m_corpRole = 0;
-    m_rolesAtAll = 0;
-    m_rolesAtBase = 0;
-    m_rolesAtHQ = 0;
-    m_rolesAtOther = 0;
+
+    m_corpRole = roles.corpRole;
+	m_rolesAtAll = roles.rolesAtAll;
+	m_rolesAtBase = roles.rolesAtBase;
+	m_rolesAtHQ = roles.rolesAtHQ;
+	m_rolesAtOther = roles.rolesAtOther;
 
     //TODO: recursively change corp on all our items.
 

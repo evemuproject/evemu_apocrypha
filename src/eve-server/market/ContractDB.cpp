@@ -247,8 +247,8 @@ bool ContractDB::SaveContract( ContractRef contract )
 		contract->avail(), contract->assigneeID(), contract->expiretime(), contract->duration(),
 		contract->startStationID(), contract->endStationID(), contract->startSolarSystemID(),
 		contract->endSolarSystemID(), contract->startRegionID(), contract->endRegionID(),
-		contract->price(), contract->reward(), contract->collateral(), contract->title(),
-		contract->description(), contract->forCorp(), contract->dateIssued(),
+		contract->price(), contract->reward(), contract->collateral(), contract->title().c_str(),
+		contract->description().c_str(), contract->forCorp(), contract->dateIssued(),
 		contract->dateExpired(), contract->dateExpired(), contract->volume(),
 		contract->issuerWalletKey(), contract->issuerAllianceID(), 0 ))
 	{
@@ -487,7 +487,7 @@ void ContractDB::DeleteContract( uint32 contractID )
 }
 
 
-uint32 ContractDB::CreateContract( ContractRef contract )
+uint32 ContractDB::CreateContract( const ContractRef contract )
 {
 	uint32 contractID = 0;
 	DBerror err;
@@ -526,15 +526,16 @@ uint32 ContractDB::CreateContract( ContractRef contract )
 		" issuerWalletKey,"
 		" issuerAllianceID"
 		")VALUES("
-		"NULL, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %f, %f, ' ', ' ', %u, 0, false, 0, " I64u ", " I64u ", " I64u ", " I64u ", %f, %d, %d)",
+		"NULL, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %f, %f, '%s', '%s', %u, 0, false, 0, " I64u ", " I64u ", " I64u ", " I64u ", %f, %d, %d)",
 		contract->issuerID(), contract->issuerCorpID(), contract->type(),
 		contract->avail(), contract->assigneeID(), contract->expiretime(), contract->duration(),
 		contract->startStationID(), contract->endStationID(), contract->startSolarSystemID(),
 		contract->endSolarSystemID(), contract->startRegionID(), contract->endRegionID(),
-		contract->price(), contract->reward(), contract->collateral(),
-		contract->forCorp(), contract->dateIssued(), contract->dateExpired(),
-		contract->dateAccepted(), contract->dateCompleted(), contract->volume(),
-		contract->issuerWalletKey(), contract->issuerAllianceID() ))
+		contract->price(), contract->reward(), contract->collateral(), contract->title().c_str(),
+		contract->description().c_str(), contract->forCorp(), contract->dateIssued(),
+		contract->dateExpired(), contract->dateAccepted(), contract->dateCompleted(),
+		contract->volume(), contract->issuerWalletKey(), contract->issuerAllianceID()
+		))
 	{
 		codelog(DATABASE__ERROR, "Error in query: %s", err.c_str() );
 		return false;

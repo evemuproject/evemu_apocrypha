@@ -41,7 +41,9 @@ StationService::~StationService() {
 	delete m_dispatch;
 }
 
-PyResult StationService::Handle_GetStationItemBits(PyCallArgs &call) {
+PyResult StationService::Handle_GetStationItemBits(PyCallArgs &call)
+{
+	call.tuple->Dump( CLIENT__CALL_DUMP, "GSIB" );
 	return m_db.GetStationItemBits(call.client->GetStationID());
 }
 

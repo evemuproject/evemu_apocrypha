@@ -90,6 +90,8 @@ public:
 	
 	bool ChangeCloneType(uint32 characterID, uint32 typeID);
 	PyRep *GetPotentialHomeStations( uint32 constellationID );
+
+	void SetHQ( uint32 corpID, uint32 stationID );
 protected:
 };
 

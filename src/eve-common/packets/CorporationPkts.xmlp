@@ -656,13 +656,20 @@
 
   <elementDef name="Call_UpdateDivisionNames">
     <tupleInline>
-      <string name="div1" />
-      <string name="div2" />
-      <string name="div3" />
-      <string name="div4" />
-      <string name="div5" />
-      <string name="div6" />
-      <string name="div7" />
+      <wstring name="div1" />
+      <wstring name="div2" />
+      <wstring name="div3" />
+      <wstring name="div4" />
+      <wstring name="div5" />
+      <wstring name="div6" />
+      <wstring name="div7" />
+      <wstring name="wal1" />
+      <wstring name="wal2" />
+      <wstring name="wal3" />
+      <wstring name="wal4" />
+      <wstring name="wal5" />
+      <wstring name="wal6" />
+      <wstring name="wal7" />
     </tupleInline>
   </elementDef>
 

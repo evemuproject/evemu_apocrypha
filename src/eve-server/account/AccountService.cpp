@@ -45,32 +45,29 @@ AccountService::~AccountService() {
 	delete m_dispatch;
 }
 
-PyResult AccountService::Handle_GetCashBalance(PyCallArgs &call) {
-	Call_SingleArg args;
-	if(!args.Decode(&call.tuple)) {
-		codelog(CLIENT__ERROR, "Invalid arguments");
-		return NULL;
-	}
-	
-	//we can get an integer or a boolean right now...
-	bool corporate_wallet = false;
-	
-	if( args.arg->IsInt() )
-		corporate_wallet = ( args.arg->AsInt()->value() != 0 );
-	else if( args.arg->IsBool() )
-		corporate_wallet = args.arg->AsBool()->value();
+PyResult AccountService::Handle_GetCashBalance(PyCallArgs &call)
+{
+	call.tuple->Dump( CLIENT__CALL_DUMP, "GCB " );
+
+	uint32 isCorp = 0;
+
+	if( call.tuple->GetItem( 0 )->IsBool() )
+		isCorp = call.tuple->GetItem( 0 )->AsBool()->value();
 	else
-    {
-		codelog(CLIENT__ERROR, "Invalid arguments");
-		return NULL;
-	}
-	
-	if(corporate_wallet)
-        //corporate wallet
-		return new PyFloat( m_db.GetCorpBalance( call.client->GetCorporationID() ) );
-    else
-        //personal wallet
+		isCorp = call.tuple->GetItem( 0 )->AsInt()->value();
+
+	uint32 walletKey = call.client->GetCorpWalletKey();
+
+	if( !isCorp )
+	{
 		return new PyFloat( call.client->GetBalance() );
+	}
+	else if( isCorp )
+	{
+		return new PyFloat( m_db.GetCorpBalance( call.client->GetCorporationID(), walletKey ) );
+	}
+
+	return new PyFloat( 0.0 );
 }
 
 //givecash takes (ownerID, retval['qty'], retval['reason'][:40])
@@ -125,8 +122,13 @@ PyResult AccountService::Handle_GetKeyMap(PyCallArgs &call) {
 }
 
 //give cash takes (ownerID, retval['qty'], retval['reason'][:40])
-PyResult AccountService::Handle_GiveCash(PyCallArgs &call) {
+PyResult AccountService::Handle_GiveCash(PyCallArgs &call)
+{
 	Call_GiveCash args;
+
+	call.tuple->Dump( CLIENT__CALL_DUMP, "GiveCash" );
+	
+	// We should care about walletKeys
 	if(!args.Decode(&call.tuple)) {
 		codelog(CLIENT__ERROR, "Invalid arguments");
 		return NULL;
@@ -169,12 +171,19 @@ PyResult AccountService::Handle_GiveCash(PyCallArgs &call) {
 		return GiveCashToChar(call.client, other, args.amount, args.reason.c_str(), RefType_playerDonation);
 	} else {
 		// here comes the corp's stuff
-		return GiveCashToCorp(call.client, args.destination, args.amount, args.reason.c_str(), RefType_playerDonation);
+		return GiveCashToCorp(call.client, args.destination, args.amount, args.reason.c_str(), RefType_playerDonation, call.client->GetCorpWalletKey() );
 	}
 }
 	
-PyTuple * AccountService::GiveCashToCorp(Client * const client, uint32 corpID, double amount, const char *reason, JournalRefType refTypeID) {
-	if(!client->AddBalance(-amount)) {
+PyTuple * AccountService::GiveCashToCorp(Client * const client, uint32 corpID, double amount, const char *reason, JournalRefType refTypeID, uint32 walletKey)
+{
+	if( ( walletKey < 1000 ) || ( walletKey > 1006 ) )
+	{
+		walletKey = 1000;
+	}
+
+	if(!client->AddBalance(-amount))
+	{
 		_log(CLIENT__ERROR, "%s: Failed to remove %.2f ISK from %u for donation to %u", 
 			client->GetName(),
 			amount,
@@ -183,7 +192,9 @@ PyTuple * AccountService::GiveCashToCorp(Client * const client, uint32 corpID, d
 		client->SendErrorMsg("Failed to transfer money from your account.");
 		return NULL;
 	}
-	if(!m_db.AddBalanceToCorp(corpID, amount)) {
+
+	if(!m_db.AddBalanceToCorp(corpID, amount, walletKey))
+	{
 		_log(CLIENT__ERROR, "%s: Failed to add %.2f ISK to %u for donation from %u", 
 			client->GetName(),
 			amount,
@@ -197,7 +208,7 @@ PyTuple * AccountService::GiveCashToCorp(Client * const client, uint32 corpID, d
 		return NULL;
 	}
 	
-	double cnb = m_db.GetCorpBalance(corpID);
+	double cnb = m_db.GetCorpBalance(corpID, walletKey);
 
 	// Send notification about the cash change
 	OnAccountChange oac;
@@ -235,7 +246,7 @@ PyTuple * AccountService::GiveCashToCorp(Client * const client, uint32 corpID, d
 		corpID,
 		"unknown",
 		corpID,
-		accountCash,
+		(EVEAccountKeys)walletKey,
 		amount,
 		cnb,
 		reason

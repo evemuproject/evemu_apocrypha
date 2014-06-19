@@ -264,7 +264,7 @@ PyResult InventoryBound::Handle_MultiMerge(PyCallArgs &call) {
             continue;
         }
 
-        stationaryItem->Merge( (InventoryItemRef)draggedItem, element.draggedQty );
+        stationaryItem->Merge( draggedItem, element.draggedQty );
     }
 
     return NULL;

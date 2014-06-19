@@ -274,6 +274,7 @@
 #include "ship/ShipService.h"
 #include "ship/TargetManager.h"
 #include "ship/dgmtypeattributeinfo.h"
+#include "ship/InsuranceDB.h"
 
 #include "spawn/SpawnDB.h"
 #include "spawn/SpawnManager.h"
@@ -289,6 +290,7 @@
 #include "station/StationDB.h"
 #include "station/StationService.h"
 #include "station/StationSvcService.h"
+#include "station/RepairSvc.h"
 
 #include "trade/TradeService.h"
 #include "trade/TradeDB.h"

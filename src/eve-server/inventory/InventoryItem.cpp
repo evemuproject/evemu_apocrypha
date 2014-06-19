@@ -563,7 +563,7 @@ uint32 InventoryItem::_Spawn(ItemFactory &factory,
 void InventoryItem::Delete() {
     //first, get out of client's sight.
     //this also removes us from our inventory.
-    Move( 6 );
+    Move( 1 ); // Change to eve system, so it does not crash the server
     ChangeOwner( 2 );
 
     //take ourself out of the DB
@@ -684,6 +684,27 @@ void InventoryItem::Move(uint32 new_location, EVEItemFlags new_flag, bool notify
     if( new_location == old_location && new_flag == old_flag )
         return; //nothing to do...
 
+	// Check that the new location has enough space
+	Inventory *new_inventory = m_factory.GetInventory( new_location, false );
+
+	InventoryItemRef i = m_factory.GetItem( new_location );
+	if( i->categoryID() == EVEDB::invCategories::Ship )
+	{
+		double rCapacity = i->GetAttribute( AttrCapacity ).get_float() - new_inventory->GetStoredVolume( flagCargoHold );
+		
+		if( rCapacity < GetAttribute( AttrVolume ).get_float() * GetAttribute( AttrQuantity ).get_float() )
+		{
+			std::map<std::string, PyRep *> args;
+
+			args["available"] = new PyFloat( rCapacity );
+			args["volume"] = new PyFloat( GetAttribute( AttrVolume ).get_float() );
+
+			throw PyException( MakeUserError( "NotEnoughCargoSpace", args ) );
+
+			return;
+		}
+	}
+
     //first, take myself out of my old inventory, if its loaded.
     Inventory *old_inventory = m_factory.GetInventory( old_location, false );
     if(old_inventory != NULL)
@@ -693,7 +714,6 @@ void InventoryItem::Move(uint32 new_location, EVEItemFlags new_flag, bool notify
     m_flag = new_flag;
 
     //then make sure that my new inventory is updated, if its loaded.
-    Inventory *new_inventory = m_factory.GetInventory( new_location, false );
     if( new_inventory != NULL )
         new_inventory->AddItem( InventoryItemRef( this ) ); //makes a new ref
 
@@ -727,7 +747,8 @@ bool InventoryItem::AlterQuantity(int32 qty_change, bool notify) {
     return(SetQuantity(new_qty, notify));
 }
 
-bool InventoryItem::SetQuantity(uint32 qty_new, bool notify) {
+bool InventoryItem::SetQuantity(uint32 qty_new, bool notify)
+{
     //if an object has its singleton set then it shouldn't be able to add/remove qty
     if(m_singleton) {
         //Print error
@@ -739,6 +760,7 @@ bool InventoryItem::SetQuantity(uint32 qty_new, bool notify) {
     uint32 old_qty = m_quantity;
 
     m_quantity = qty_new;
+	SetAttribute( AttrQuantity, qty_new, notify );
 
     SaveItem();
 
@@ -773,8 +795,12 @@ InventoryItemRef InventoryItem::Split(int32 qty_to_take, bool notify) {
     );
 
     InventoryItemRef res = m_factory.SpawnItem(idata);
+
     if(notify)
         res->Move( locationID(), flag() );
+
+	res->SetAttribute( AttrVolume, res->type().volume() );
+	res->SetAttribute( AttrQuantity, res->quantity() );
 
     return( res );
 }

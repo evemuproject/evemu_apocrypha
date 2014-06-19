@@ -34,6 +34,8 @@ CorpMgrService::CorpMgrService(PyServiceMgr *mgr)
 	_SetCallDispatcher(m_dispatch);
 
 	PyCallable_REG_CALL(CorpMgrService, GetPublicInfo)
+	PyCallable_REG_CALL(CorpMgrService, GetAssetInventory)
+	PyCallable_REG_CALL(CorpMgrService, GetCorporations)
 }
 
 CorpMgrService::~CorpMgrService() {
@@ -50,6 +52,23 @@ PyResult CorpMgrService::Handle_GetPublicInfo(PyCallArgs &call) {
 
 	return m_db.GetCorporation(corpID.arg);
 }
+
+PyResult CorpMgrService::Handle_GetAssetInventory( PyCallArgs &call )
+{
+	call.tuple->Dump( CLIENT__CALL_DUMP, "GetAssetInventory " );
+
+	return new PyInt( call.client->GetCharacterID() );
+}
+
+
+PyResult CorpMgrService::Handle_GetCorporations( PyCallArgs& call )
+{
+	call.tuple->Dump( CLIENT__CALL_DUMP, "GetCorporations " );
+
+	return new PyNone;
+}
+
+
 
 
 

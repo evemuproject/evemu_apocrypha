@@ -1,13 +1,17 @@
 @echo off
 
-set SQL_ROOT=..
+cd ..
 
-set INPUT_FILE=%SQL_ROOT%\ofic-updates\*.sql
-set OUTPUT_FILE=%SQL_ROOT%\ofic-updates.sql
-set TEMP_FILE=_merge_temp_
+set INPUT=ofic-updates\*.sql
+set TEMPF=ofic_updates_merge.tmp
+set OUTPUT=ofic-updates.sql
 
-if exist %OUTPUT_FILE% del %OUTPUT_FILE%
-type %INPUT_FILE% > %TEMP_FILE%
-move %TEMP_FILE% %OUTPUT_FILE%
+if exist %OUTPUT% del %OUTPUT%
+if exist %TEMPF% del %TEMPF%
 
-echo File %OUTPUT_FILE% has been successfully created.
+type %INPUT% > %TEMPF%
+move %TEMPF% %OUTPUT%
+
+echo File %OUTPUT% has been successfully created.
+
+cd utils

@@ -40,6 +40,7 @@ CorporationService::CorporationService(PyServiceMgr *mgr)
 	PyCallable_REG_CALL(CorporationService, GetAllCorpMedals)
 	PyCallable_REG_CALL(CorporationService, GetRecruitmentAdTypes)
 	PyCallable_REG_CALL(CorporationService, GetRecruitmentAdsByCriteria)
+	PyCallable_REG_CALL(CorporationService, GetCorpInfo)
 }
 
 CorporationService::~CorporationService() {
@@ -238,6 +239,38 @@ PyResult CorporationService::Handle_GetRecruitmentAdsByCriteria( PyCallArgs& cal
 	return rs.Encode();
 }
 
+
+PyResult CorporationService::Handle_GetCorpInfo( PyCallArgs& call )
+{
+	sLog.Debug( "CorporationService", "Called GetCorpInfo stub." );
+
+	Call_SingleIntegerArg arg;
+
+	if( !arg.Decode( &call.tuple ) )
+	{
+		_log( SERVICE__ERROR, "Failed to decode args for call GetCorpInfo" );
+		return NULL;
+	}
+
+	// When we know what this is supossed to do we can fetch it from the DB
+	DBRowDescriptor *header = new DBRowDescriptor();
+	header->AddColumn( "corporationID", DBTYPE_I4 );
+	header->AddColumn( "typeID", DBTYPE_I4 );
+	header->AddColumn( "buyDate", DBTYPE_FILETIME );
+	header->AddColumn( "buyPrice", DBTYPE_CY );
+	header->AddColumn( "buyQuantity", DBTYPE_I4 );
+	header->AddColumn( "buyStationID", DBTYPE_I4 );
+	header->AddColumn( "sellDate", DBTYPE_FILETIME );
+	header->AddColumn( "sellPrice", DBTYPE_CY );
+	header->AddColumn( "sellQuantity", DBTYPE_I4 );
+	header->AddColumn( "sellStationID", DBTYPE_I4 );
+	header->AddColumn( "agtBuyPrice", DBTYPE_CY );
+	header->AddColumn( "agtSellPrice", DBTYPE_CY );
+
+	CRowSet *res = new CRowSet( &header );
+	
+	return res;
+}
 
 
 

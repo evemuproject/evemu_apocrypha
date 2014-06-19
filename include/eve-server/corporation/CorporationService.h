@@ -49,6 +49,7 @@ protected:
 	PyCallable_DECL_CALL(GetAllCorpMedals)
 	PyCallable_DECL_CALL(GetRecruitmentAdTypes)
 	PyCallable_DECL_CALL(GetRecruitmentAdsByCriteria)
+	PyCallable_DECL_CALL(GetCorpInfo)
 };
 
 

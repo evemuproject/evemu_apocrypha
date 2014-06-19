@@ -80,6 +80,10 @@ PyResult Command_create( Client* who, CommandDB* db, PyServiceMgr* services, con
 	//Move to location
 	i->Move( locationID, flag, true );
 
+	// Add essential attributes
+	i->SetAttribute( AttrVolume, i->quantity() * i->type().volume() );
+	i->SetAttribute( AttrQuantity, i->quantity() );
+
 	return new PyString( "Creation successful." );
 }
 
@@ -134,6 +138,15 @@ PyResult Command_createitem( Client* who, CommandDB* db, PyServiceMgr* services,
 	//Move to location
 	i->Move( locationID, flag, true );
 
+	// Add essential attributes
+	i->SetAttribute( AttrVolume, i->type().volume(), true );
+	i->SetAttribute( AttrQuantity, i->quantity(), true );
+
+	if( i->categoryID() == EVEDB::invCategories::Ship )
+	{
+		// Add essential attributes for ships
+		i->SetAttribute( AttrCapacity, i->type().capacity(), true );
+	}
 	return new PyString( "Creation successful." );
 }
 
@@ -1006,6 +1019,9 @@ PyResult Command_dogma( Client* who, CommandDB* db, PyServiceMgr* services, cons
 {
 	//"dogma" "140019878" "agility" "=" "0.2"
 
+	bool argType = 0; // 0 = string, 1 = int
+	const char *attributeName = args.arg( 2 ).c_str();
+
 	if( !(args.argCount() == 5) ) {
 		throw PyException( MakeCustomError("Correct Usage: /dogma [itemID] [attributeName] = [value]") );
 	}
@@ -1015,10 +1031,10 @@ PyResult Command_dogma( Client* who, CommandDB* db, PyServiceMgr* services, cons
 	}
 	uint32 itemID = atoi( args.arg( 1 ).c_str() );
 
-	if( args.isNumber( 2 ) ) {
-		throw PyException( MakeCustomError("Invalid attributeName. \n Correct Usage: /dogma [itemID] [attributeName] = [value]") );
+	if( args.isNumber( 2 ) )
+	{
+		argType = 1;
 	}
-	const char *attributeName = args.arg( 2 ).c_str();
 
 	if( !args.isNumber( 4 ) ){
 		throw PyException( MakeCustomError("Invalid attribute value. \n Correct Usage: /dogma [itemID] [attributeName] = [value]") );
@@ -1028,8 +1044,13 @@ PyResult Command_dogma( Client* who, CommandDB* db, PyServiceMgr* services, cons
 	//get item
 	InventoryItemRef item = services->item_factory.GetItem( itemID );
 
+	if( item == NULL )
+		return NULL;
+
 	//get attributeID
-	uint32 attributeID = db->GetAttributeID( attributeName );
+	uint32 attributeID = 0;
+	if( argType == 0 )attributeID = db->GetAttributeID( attributeName );
+	else attributeID = atoi( args.arg( 2 ).c_str() );
 
     sLog.Warning( "GMCommands: Command_dogma()", "This command will modify attribute and send change to client, but change does not take effect in client for some reason." );
     item->SetAttribute( attributeID, attributeValue );

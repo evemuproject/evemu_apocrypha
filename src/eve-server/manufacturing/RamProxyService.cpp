@@ -636,88 +636,107 @@ void RamProxyService::_VerifyInstallJob_Call(const Call_InstallJob &args, Invent
             throw(PyException(MakeUserError("RamAccessDeniedToBOMHangar")));
 }
 
-void RamProxyService::_VerifyInstallJob_Install(const Rsp_InstallJob &rsp, const PathElement &pathBomLocation, const std::vector<RequiredItem> &reqItems, const uint32 runs, Client *const c) {
-    // MONEY CHECK
-    // ************
-    if(rsp.cost > c->GetBalance()) {
+void RamProxyService::_VerifyInstallJob_Install(const Rsp_InstallJob &rsp, const PathElement &pathBomLocation, const std::vector<RequiredItem> &reqItems, const uint32 runs, Client *const c)
+{
+    // Check money
+    if( rsp.cost > c->GetBalance() )
+	{
         std::map<std::string, PyRep *> args;
-        args["amount"] = new PyFloat(rsp.cost);
-        args["balance"] = new PyFloat(c->GetBalance());
 
-        throw(PyException(MakeUserError("NotEnoughMoney", args)));
+        args["amount"] = new PyFloat( rsp.cost );
+        args["balance"] = new PyFloat( c->GetBalance() );
+
+        throw PyException( MakeUserError( "NotEnoughMoney", args ) );
     }
 
-    // PRODUCTION TIME CHECK
-    // **********************
-    if((uint32)rsp.productionTime > ramProductionTimeLimit) {
+    // Check production time
+    if( (uint32)rsp.productionTime > ramProductionTimeLimit)
+	{
         std::map<std::string, PyRep *> args;
-        args["productionTime"] = new PyInt(rsp.productionTime);
-        args["limit"] = new PyInt(ramProductionTimeLimit);
 
-        throw(PyException(MakeUserError("RamProductionTimeExceedsLimits")));
+        args["productionTime"] = new PyInt( rsp.productionTime );
+        args["limit"] = new PyInt( ramProductionTimeLimit );
+
+        throw PyException( MakeUserError( "RamProductionTimeExceedsLimits" ) );
     }
 
-    // SKILLS & ITEMS CHECK
-    // *********************
+	// Lets check items and skills
     std::vector<InventoryItemRef> skills, items;
 
-    // get skills ...
-    std::set<EVEItemFlags> flags;
-    flags.insert(flagSkill);
-    flags.insert(flagSkillInTraining);
-    c->GetChar()->FindByFlagSet(flags, skills);
+    // Get skills
+	c->GetChar()->FindByFlag( flagSkill, skills );
 
-    // ... and items
-    _GetBOMItems( pathBomLocation, items );
+	// Get items
+	_GetBOMItems( pathBomLocation, items );
 
-    std::vector<RequiredItem>::const_iterator cur, end;
-    cur = reqItems.begin();
-    end = reqItems.end();
-    for(; cur != end; cur++) {
-        // check skill (quantity is required level)
-        if(cur->isSkill) {
-            /* Commented out until we get skills working some different way ...
-            if(GetSkillLevel(skills, cur->typeID) < cur->quantity) {
-                std::map<std::string, PyRep *> args;
-                args["item"] = new PyString(
-                    m_manager->item_factory.type(cur->typeID)->name().c_str()
-                );
-                args["skillLevel"] = new PyInt(cur->quantity);
+	std::vector<RequiredItem>::const_iterator cur, end;
+	
+	cur = reqItems.begin();
+	end = reqItems.end();
 
-                throw(PyException(MakeUserError("RamNeedSkillForJob", args)));
-            }*/
-        } else {
-            // check materials
+	for( ; cur != end; cur ++ )
+	{
+		if( cur->isSkill )
+		{
+			// Ok, now lets search in skills
+			std::vector<InventoryItemRef>::const_iterator scur, send;
 
-            // calculate needed quantity
-            uint32 qtyNeeded = ceil(cur->quantity * rsp.materialMultiplier * runs);
-            if(cur->damagePerJob == 1.0)
-                qtyNeeded = ceil(qtyNeeded * rsp.charMaterialMultiplier);   // skill multiplier is applied only on fully consumed materials
+			scur = skills.begin();
+			send = skills.end();
 
-            std::vector<InventoryItemRef>::iterator curi, endi;
-            curi = items.begin();
-            endi = items.end();
-            for(; curi != endi; curi++) {
-                if(    (*curi)->typeID() == cur->typeID
-                    && (*curi)->ownerID() == c->GetCharacterID()
-                ) {
-                    if((*curi)->quantity() < qtyNeeded)
-                        qtyNeeded -= (*curi)->quantity();
-                    else
-                        break;
-                }
-            }
+			for( ; scur != send; scur ++ )
+			{
+				if( cur->typeID == (*scur)->typeID() )
+				{
+					// Ok, got the skill, lets check it
+					uint32 skillLevel = (*scur)->GetAttribute( AttrSkillLevel ).get_int();
 
-            if(qtyNeeded > 0) {
-                std::map<std::string, PyRep *> args;
-                args["item"] = new PyString(
-                    m_manager->item_factory.GetType(cur->typeID)->name().c_str()
-                );
+					if( !( skillLevel >= cur->quantity ) )
+					{
+						// Ok, we do not have the required skill level, send exception
+						std::map<std::string, PyRep *> args;
 
-                throw(PyException(MakeUserError("RamNeedMoreForJob", args)));
-            }
-        }
-    }
+						args[ "item" ] = new PyString( m_manager->item_factory.GetType( cur->typeID )->name().c_str() );
+						args[ "skillLevel" ] = new PyInt( skillLevel );
+
+						throw PyException( MakeUserError( "RamNeedSkillForJob", args ) );
+					}
+				}
+			}
+		}
+		else
+		{
+			uint32 qtyNeeded = ceil( cur->quantity * rsp.materialMultiplier * runs );
+
+			if( cur->damagePerJob == 1.0 )
+				qtyNeeded = ceil( qtyNeeded * rsp.charMaterialMultiplier );
+			
+			std::vector<InventoryItemRef>::iterator curi, endi;
+
+			curi = items.begin();
+			endi = items.end();
+
+			for( ; curi != endi; curi ++ )
+			{
+				if( ( (*curi)->typeID() == cur->typeID ) && ( (*curi)->ownerID() == c->GetCharacterID() ) )
+				{
+					if( (*curi)->quantity() < qtyNeeded )
+						qtyNeeded -= (*curi)->quantity();
+					else
+						break;
+				}
+			}
+
+			if( qtyNeeded > 0 )
+			{
+				std::map<std::string, PyRep *> args;
+
+				args[ "item" ] = new PyString( m_manager->item_factory.GetType( cur->typeID )->name().c_str() );
+
+				throw PyException( MakeUserError( "RamNeedMoreForJob", args ) );
+			}
+		}
+	}
 }
 
 void RamProxyService::_VerifyCompleteJob(const Call_CompleteJob &args, Client *const c) {

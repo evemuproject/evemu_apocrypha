@@ -100,7 +100,7 @@ double CargoContainer::GetCapacity(EVEItemFlags flag) const
 {
     switch( flag ) {
         case flagAutoFit:
-        case flagCargoHold:     return GetAttribute(AttrCapacity).get_float();
+        case flagCargoHold:     return GetAttribute( AttrCapacity ).get_float();
         default:
             return 0.0;
     }
@@ -115,11 +115,15 @@ void CargoContainer::ValidateAddItem(EVEItemFlags flag, InventoryItemRef item, C
 		//get all items in cargohold
 		EvilNumber capacityUsed(0);
 		std::vector<InventoryItemRef> items;
+
 		c->GetShip()->FindByFlag(flag, items);
-		for(uint32 i = 0; i < items.size(); i++){
-			capacityUsed += items[i]->GetAttribute(AttrVolume);
+		
+		for(uint32 i = 0; i < items.size(); i++)
+		{
+			capacityUsed += items[ i ]->GetAttribute( AttrVolume );
 		}
-		if( capacityUsed + item->GetAttribute(AttrVolume) > c->GetShip()->GetAttribute(AttrCapacity) )
+
+		if( capacityUsed + item->GetAttribute( AttrVolume ) > c->GetShip()->GetAttribute( AttrCapacity ) )
 			throw PyException( MakeCustomError( "Not enough cargo space!") );
     }
 }

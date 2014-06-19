@@ -1,0 +1,1 @@
+ALTER TABLE `ramassemblylines` CHANGE `nextFreeTime` `nextFreeTime` BIGINT NOT NULL DEFAULT '0'

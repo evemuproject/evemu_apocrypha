@@ -385,21 +385,22 @@ bool ServiceDB::GetConstant(const char *name, uint32 &into) {
 }
 
 void ServiceDB::ProcessStringChange(const char * key, const std::string & oldValue, const std::string & newValue, PyDict * notif, std::vector<std::string> & dbQ) {
-    if (oldValue != newValue) {
-        std::string newEscValue;
-        std::string qValue(key);
+    if( oldValue != newValue )
+	{
+		std::string newEscaped;
+		std::string qValue;
 
-        sDatabase.DoEscapeString(newEscValue, newValue);
-        
-        // add to notification
-        PyTuple * val = new PyTuple(2);
-        val->items[0] = new PyString(oldValue);
-        val->items[1] = new PyString(newValue);
-        notif->SetItemString(key, val);
+		sDatabase.DoEscapeString( newEscaped, newValue );
 
-        qValue += " = '" + newEscValue + "'";
-        dbQ.push_back(qValue);
-    }
+		// Add to notification
+		PyTuple *val = new PyTuple( 2 );
+		val->items[ 0 ] = new PyString( oldValue );
+		val->items[ 1 ] = new PyString( newValue );
+		notif->SetItemString( key, val );
+
+		sprintf( qValue, "%s = '%s'", key, newEscaped.c_str() );
+		dbQ.push_back( qValue );
+	}
 }
 
 void ServiceDB::ProcessRealChange(const char * key, double oldValue, double newValue, PyDict * notif, std::vector<std::string> & dbQ) {
